@@ -1,7 +1,7 @@
 {
   "name": "@everypay/applepay-rn-bridge",
   "description": "EveryPay Apple Pay React Native Bridge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "publishConfig": {
     "access": "public"
