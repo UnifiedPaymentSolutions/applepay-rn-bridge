@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",         // Output directory for compiled files
+    "rootDir": "./src",         // Directory for your source files
+    "types": ["react", "react-native"],
+    "skipLibCheck": true,
+    "jsx": "react-native",
+    "moduleResolution": "node",
+    "target": "esnext",
+    "strict": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "src/index.d.ts"]
+}

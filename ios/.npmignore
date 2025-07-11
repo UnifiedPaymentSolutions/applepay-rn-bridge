@@ -1,0 +1,12 @@
+Pods/
+Podfile
+Podfile.lock
+build/
+*.xcodeproj/
+*.xcworkspace/
+PrivacyInfo.xcprivacy
+**/*.xcuserstate
+**/*.xcscheme
+**/*.plist
+**/*.podspec
+

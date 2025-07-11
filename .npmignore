@@ -1,0 +1,9 @@
+# Ignore src and other non-necessary directories
+src/
+node_modules/
+example/
+scripts/
+test/
+*.log
+*.md
+*.tsbuildinfo
