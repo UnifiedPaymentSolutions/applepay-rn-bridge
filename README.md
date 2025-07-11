@@ -4,4 +4,5 @@
 
 1. Install the package:
    ```bash
-   npm install --save rn-applepay-everypay-bridge
+   npm i @everypay/applepay-rn-bridge
+   ```
