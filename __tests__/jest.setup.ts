@@ -1,10 +1,17 @@
-// jest.setup.ts
+// Mock react-native-dotenv - ADD THIS FIRST
+jest.mock('react-native-dotenv', () => ({
+  API_BASE_URL: 'https://mocked-api.com',
+  // Add any other env variables your code might use
+}));
+
+// Your existing React Native mock
 jest.mock('react-native', () => {
   // Create a basic mock for React Native components
   const mockRN = {
     NativeModules: {
       ApplePayModule: {
-        startPayment: jest.fn(),
+        // FIX THIS: Change method name to match what your code is using
+        startApplePay: jest.fn(),  // Changed from startPayment to startApplePay
         canMakePayments: jest.fn().mockResolvedValue(true),
       }
     },
