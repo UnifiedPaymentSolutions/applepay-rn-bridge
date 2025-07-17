@@ -1,14 +1,29 @@
-// ApplePayModule.h
-
-#import <Foundation/Foundation.h>
-#import <PassKit/PassKit.h>
 #import <React/RCTBridgeModule.h>
-#import <React/RCTEventEmitter.h>
+#import <PassKit/PassKit.h>
 
-@interface ApplePayModule : RCTEventEmitter <RCTBridgeModule, PKPaymentAuthorizationControllerDelegate>
+// Forward declare classes to avoid circular imports in header
+@class ApplePayNetworkService;
+@class ApplePayPaymentContext;
 
-@property (nonatomic, strong) PKPaymentAuthorizationController *session;
-@property (nonatomic, assign) BOOL hasListeners;
-@property (nonatomic, strong) NSDictionary *paymentData;
+NS_ASSUME_NONNULL_BEGIN
+
+@interface ApplePayModule : NSObject <RCTBridgeModule, PKPaymentAuthorizationControllerDelegate>
+
+// --- State Properties ---
+@property (nonatomic, strong, nullable) PKPaymentAuthorizationController *session;
+@property (nonatomic, strong, nullable) ApplePayPaymentContext *paymentContext; // Holds data for the current payment
+@property (nonatomic, assign) BOOL isPaymentInProgress;
+
+// --- Dependencies ---
+@property (nonatomic, strong) ApplePayNetworkService *networkService; // Handles network calls
+
+// --- Promise Callbacks ---
+@property (nonatomic, copy, nullable) RCTPromiseResolveBlock currentResolve;
+@property (nonatomic, copy, nullable) RCTPromiseRejectBlock currentReject;
+
+
+
 
 @end
+
+NS_ASSUME_NONNULL_END
