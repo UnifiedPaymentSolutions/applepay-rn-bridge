@@ -145,12 +145,14 @@ const MyPaymentScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-      <Button title="Pay with Apple Pay" onPress={handleApplePayPress} disabled={!isApplePayAvailable || isLoading} />
-      {isLoading && <Text style={{ marginTop: 10 }}>Processing...</Text>}
-      {paymentResult && <Text style={{ marginTop: 20, textAlign: 'center' }}>{paymentResult}</Text>}
-      {!isApplePayAvailable && <Text style={{ marginTop: 20, color: 'red' }}>Apple Pay Not Available</Text>}
-    </View>
+    {Platform.OS === 'ios' && (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Button title="Pay with Apple Pay" onPress={handleApplePayPress} disabled={!isApplePayAvailable || isLoading} />
+        {isLoading && <Text style={{ marginTop: 10 }}>Processing...</Text>}
+        {paymentResult && <Text style={{ marginTop: 20, textAlign: 'center' }}>{paymentResult}</Text>}
+        {!isApplePayAvailable && <Text style={{ marginTop: 20, color: 'red' }}>Apple Pay Not Available</Text>}
+      </View>
+    )}
   );
 };
 
