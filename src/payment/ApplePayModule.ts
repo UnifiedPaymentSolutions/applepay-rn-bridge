@@ -59,7 +59,7 @@ const MODULE_NAME = 'ApplePayModule';
 const ApplePayModule = NativeModules[MODULE_NAME];
 
 // Check if the native module exists
-if (!ApplePayModule) {
+if (Platform.OS === 'ios' && !ApplePayModule) {
   // Provide more context in the error message
   console.error(
     `Native module "${MODULE_NAME}" not found.` +
@@ -217,12 +217,20 @@ async function setMockPaymentsEnabled(enabled: boolean): Promise<boolean> {
 }
 
 // Create and export the module that implements the interface
-const ApplePay: ApplePayInterface = {
-  canMakePayments,
-  initEverypayPayment,
-  startApplePayPayment,
-  startApplePayWithLateEverypayInit,
-  setMockPaymentsEnabled
+const ApplePay: ApplePayInterface = Platform.OS === 'ios' 
+? {
+    canMakePayments,
+    initEverypayPayment,
+    startApplePayPayment,
+    startApplePayWithLateEverypayInit,
+    setMockPaymentsEnabled
+  }
+: {
+  canMakePayments: () => Promise.resolve(false),
+  initEverypayPayment: () => Promise.resolve({} as InitResult),
+  startApplePayPayment: () => Promise.resolve({} as PaymentResult),
+  startApplePayWithLateEverypayInit: () => Promise.resolve({} as PaymentResult),
+  setMockPaymentsEnabled: () => Promise.resolve(false)
 };
 
 export default ApplePay;

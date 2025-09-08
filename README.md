@@ -58,7 +58,7 @@ The native implementation follows a modular approach, separating network communi
 
 ```typescript
 import React, { useState, useEffect } from 'react';
-import { View, Button, Text, Alert } from 'react-native';
+import { View, Button, Text, Alert, Platform } from 'react-native';
 import { canMakePayments, initPayment, startApplePay, EPError } from '@everypay/applepay-rn-bridge'; 
 import type { StartPaymentInput, PaymentInitData, EPSuccessResult } from '@everypay/applepay-rn-bridge';
 
@@ -69,6 +69,9 @@ const MyPaymentScreen = () => {
 
   useEffect(() => {
     async function checkAvailability() {
+      if(Platform.OS !== 'ios') {
+        return;
+      }
       try {
         const available = await canMakePayments();
         setIsApplePayAvailable(available);
