@@ -171,6 +171,10 @@ async function handlePayment() {
 }
 ```
 
+## Additional Guides
+
+- **[Custom Button Implementation](./CUSTOM_BUTTON_GUIDE.md)** - Complete guide for implementing Apple Pay with your own custom-styled button, including component code, error handling, and best practices.
+
 ## API Reference
 
 ### Backend Mode Methods
