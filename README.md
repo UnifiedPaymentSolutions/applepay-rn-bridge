@@ -1,110 +1,45 @@
 # @everypay/applepay-rn-bridge
 
-EveryPay Apple Pay React Native Bridge (iOS Only).
+EveryPay Apple Pay React Native Bridge (iOS Only). Built on [EveryPay Apple Pay iOS SDK](../everypay-applepay-sdk-client). Full TypeScript support.
 
-- **Backend Mode** (recommended): Keep API credentials secure on your backend
-- **SDK Integration**: Built on EveryPay Apple Pay iOS SDK
+- **Backend Mode**: Keep API credentials secure on your backend (recommended)
+- **SDK Integration**: Built on EveryPay iOS SDK for better maintainability
 - **Enhanced Security**: API credentials never exposed in mobile app
 - **Dual Mode Support**: Backend Mode (recommended) + SDK Mode
-
-## Requirements
-
-- React Native >= 0.60 (for autolinking)
-- iOS >= 15.0
-- Xcode >= 14
-- CocoaPods
-- Apple Developer account with Apple Pay configured (Merchant ID)
-- EverypayApplePay SDK (local path until published)
+- **Recurring Payments**: Request tokens for recurring payments (iOS 16+)
 
 ## Installation
 
-1. **Add the package to your project:**
+```sh
+npm install @everypay/applepay-rn-bridge
+```
 
-   ```bash
-   npm install @everypay/applepay-rn-bridge
-   # or
-   yarn add @everypay/applepay-rn-bridge
-   ```
-
-2. **Add EverypayApplePay SDK to your Podfile:**
-
-   Since the SDK is not yet published to CocoaPods, add a local path reference in your app's `ios/Podfile`:
-
-   ```ruby
-   pod 'EverypayApplePay', :path => '../path/to/everypay-applepay-sdk-client/EverypayApplePay'
-   ```
-
-3. **Install Native Dependencies:**
-
-   ```bash
-   cd ios
-   pod install
-   ```
-
-## Apple Pay Setup
-
-Before using this library, you need to configure Apple Pay in your project:
-
-### 1. Apple Developer Account Setup
-
-1. Log in to your [Apple Developer Account](https://developer.apple.com)
-2. Go to **Certificates, Identifiers & Profiles**
-3. Create a **Merchant ID**:
-   - Navigate to **Identifiers** → **Merchant IDs**
-   - Click **+** to create a new Merchant ID
-   - Enter an identifier (e.g., `merchant.com.yourcompany.app`)
-   - Enter a description
-
-### 2. EveryPay Setup
-
-When the payment processor handles decryption, they need to generate the cryptographic keys and provide the public key via a Certificate Signing Request (CSR) to the merchant. The merchant will then upload this CSR to the Apple Developer portal. In return, Apple will provide the merchant a certificate which the payment processor will need to import.
-
-**Merchant actions:**
-1. Login to the Everypay Merchant portal and open E-Shop Settings → select shop → Apple Pay (in apps). To the "Apple Pay Merchant Indentifier" field enter the identifier you created in step 1 and register it.
-2. Download the "Payment Processing Certificate CSR" from the same block.
-3. Log in to the [Apple Developer Portal](https://developer.apple.com)
-4. Navigate to **Certificates, Identifiers & Profiles** > **Certificates**
-5. Add new certificate and select **Apple Pay Payment Processing Certificate**
-6. Select the merchant ID created in the previous step ("Apple Developer Account Setup")
-7. Under the **Apple Pay Payment Processing Certificate** click "Create Certificate" and upload the CSR file provided by Paytech/EveryPay
-8. Download the generated certificate (.cer file) from Apple Developer portal
-9. Upload the downloaded certificate to the Everypay Merchant portal under **E-Shop Settings** → select shop → **Apple Pay (in apps)** → **Upload Certificate**
-
-### 3. Xcode Project Configuration
-
-1. Open your project in Xcode
-2. Select your target
-3. Go to **Signing & Capabilities**
-4. Click **+ Capability** and add **Apple Pay**
-5. Select the Merchant ID you created
-
-### 4. Entitlements
-
-Xcode will automatically add the Apple Pay entitlement to your project. Verify that your entitlements file contains:
-
-```xml
-<key>com.apple.developer.in-app-payments</key>
-<array>
-    <string>merchant.com.yourcompany.app</string>
-</array>
+```sh
+yarn add @everypay/applepay-rn-bridge
 ```
 
 ## Quick Start
 
 ### Backend Mode (Recommended)
 
-Most secure approach - API credentials stay on your backend.
+Most secure approach - API credentials stay on your backend. You have full control over when and how API requests are made.
 
-**Step 1:** Implement backend endpoints that call EveryPay API:
-- `POST /api/applepay/create-payment` - Initialize payment and fetch merchant ID
-- `POST /api/applepay/process-token` - Send Apple Pay token to EveryPay
+**Step 1:** Implement 2 backend endpoints ([see guide](./BACKEND_INTEGRATION.md))
 
-**Step 2:** Use the `ApplePayButton` component:
+Your backend needs these endpoints:
+
+- **POST /api/applepay/create-payment** - Combines EveryPay `payment_methods` + `payments/oneoff` API calls
+- **POST /api/applepay/process-token** - Calls EveryPay `apple_pay/payment_data` API to process the token
+
+**Step 2:** Use ApplePayButton component:
 
 ```typescript
 import React, { useState, useEffect } from 'react';
 import { ApplePayButton } from '@everypay/applepay-rn-bridge';
-import type { ApplePayBackendData, ApplePayTokenResult } from '@everypay/applepay-rn-bridge';
+import type {
+  ApplePayBackendData,
+  ApplePayTokenResult
+} from '@everypay/applepay-rn-bridge';
 
 function PaymentScreen() {
   const [backendData, setBackendData] = useState<ApplePayBackendData | null>(null);
@@ -118,7 +53,9 @@ function PaymentScreen() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             amount: 10.50,
-            orderId: 'ORDER-123',
+            label: 'Product Purchase',
+            orderReference: 'ORDER-123',
+            customerEmail: 'customer@example.com',
           }),
         });
         const data = await response.json();
@@ -133,12 +70,17 @@ function PaymentScreen() {
 
   // Process the Apple Pay token
   const handlePaymentToken = async (tokenData: ApplePayTokenResult) => {
-    const result = await fetch('https://your-backend.com/api/applepay/process-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(tokenData),
-    });
-    return result.json();
+    try {
+      const result = await fetch('https://your-backend.com/api/applepay/process-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tokenData)
+      });
+      return result.json();
+    } catch (error) {
+      console.error('Failed to process token:', error);
+      throw error;
+    }
   };
 
   // Show Apple Pay button only when backend data is ready
@@ -150,11 +92,12 @@ function PaymentScreen() {
     <ApplePayButton
       backendData={backendData}
       onPressCallback={handlePaymentToken}
-      onPaymentSuccess={(result) => console.log('Success!', result)}
+      // Handle your back-end response here
+      onPaymentSuccess={(result) => result.state === 'failed' ? console.error('Error:', result) : console.log('Success!', result)}
       onPaymentError={(error) => console.error('Payment failed:', error)}
       onPaymentCanceled={() => console.log('Payment canceled')}
       buttonStyle="black"
-      buttonType="buy"
+      buttonType="buy"  // Options: buy, plain, checkout, donate, order, subscribe, etc.
     />
   );
 }
@@ -162,36 +105,45 @@ function PaymentScreen() {
 
 **How it works:**
 
-1. Component mounts → fetch payment data from your `/create-payment` endpoint
-2. When data arrives → Apple Pay button appears (native PKPaymentButton)
-3. User presses button → SDK shows Apple Pay sheet
-4. `onPressCallback` is called with the token → you send it to your `/process-token` endpoint
+1. Component mounts → **automatically fetches** payment data from your `/create-payment` endpoint (this should internally call both EveryPay `payment_methods` and `payments/oneoff` APIs)
+2. When data arrives → Apple Pay button appears (component initializes automatically)
+3. User presses Apple Pay button → SDK shows Apple Pay UI and retrieves token
+4. `onPressCallback` is called with the token → **you send** it to your `/process-token` endpoint
 5. Your backend processes the payment and returns the result
+
+**Full Backend Setup Guide:** [BACKEND_INTEGRATION.md](./BACKEND_INTEGRATION.md)
 
 ---
 
 ### SDK Mode
 
-API credentials stored in app (less secure, but simpler setup):
+API keys are stored in the app, no back-end service needed
+
+Use ApplePayButton with SDK configuration:
 
 ```typescript
 import { ApplePayButton } from '@everypay/applepay-rn-bridge';
+import type { ApplePaySDKConfig } from '@everypay/applepay-rn-bridge';
 
 function PaymentScreen() {
+  const config: ApplePaySDKConfig = {
+    // Everypay API credentials in app
+    apiUsername: 'your_username',
+    apiSecret: 'your_secret',
+    baseUrl: 'https://payment.sandbox.lhv.ee', // or production URL
+    accountName: 'EUR3D1',
+    countryCode: 'EE',
+  };
+
   const handlePayment = async (result: any) => {
+    // Payment already processed by SDK
     console.log('Payment result:', result);
     return result;
   };
 
   return (
     <ApplePayButton
-      config={{
-        apiUsername: 'YOUR_USERNAME',
-        apiSecret: 'YOUR_SECRET',
-        baseUrl: 'https://payment.sandbox.lhv.ee',
-        accountName: 'EUR3D1',
-        countryCode: 'EE',
-      }}
+      config={config}
       amount={10.50}
       label="Product Purchase"
       orderReference="ORDER-123"
@@ -206,66 +158,155 @@ function PaymentScreen() {
 }
 ```
 
+**How it works:**
+
+1. Component auto-detects SDK mode (no `backendData`, but has `config` with API credentials)
+2. Initializes SDK with your credentials
+3. On button press, shows Apple Pay and processes payment via EveryPay API
+4. Calls your `onPressCallback` with the payment result
+
 ---
 
-### Programmatic API (Custom Button)
+### Component Features
 
-If you prefer to use your own custom button design, use the programmatic API:
+- **Auto-mode detection** - Automatically uses Backend or SDK mode based on config
+- **User-controlled flow** - You decide when to fetch data and make API calls
+- **Single callback** - Simple `onPressCallback` handles payment flow
+- **Native button** - Official PKPaymentButton with multiple types
+- **Type-safe** - Pass typed data directly, full TypeScript support
+- **Availability check** - Only renders when Apple Pay is available
+
+## Requirements
+
+### System Requirements
+
+- iOS only (Android not supported)
+- React Native >= 0.60 (for autolinking)
+- iOS >= 15.0
+- Xcode >= 14
+
+### iOS Requirements
+
+Add EverypayApplePay SDK to your Podfile:
+
+```ruby
+pod 'EverypayApplePay', :path => '../path/to/everypay-applepay-sdk-client/EverypayApplePay'
+```
+
+Install native dependencies:
+
+```bash
+cd ios
+pod install
+```
+
+### Apple Pay Configuration
+
+1. **Apple Developer Account Setup**
+   - Create a Merchant ID in your [Apple Developer Account](https://developer.apple.com)
+   - Navigate to Certificates, Identifiers & Profiles → Merchant IDs
+
+2. **EveryPay Setup**
+   - Login to EveryPay Merchant portal
+   - Go to E-Shop Settings → Apple Pay (in apps)
+   - Enter your Apple Pay Merchant Identifier
+   - Download CSR, upload to Apple, download certificate, upload back to EveryPay
+
+3. **Xcode Project Configuration**
+   - Open your project in Xcode
+   - Select your target → Signing & Capabilities
+   - Add "Apple Pay" capability
+   - Select your Merchant ID
+
+## API Reference
+
+### Configuration Types
+
+#### ApplePayBackendData
+
+Data structure from backend for payment initialization:
 
 ```typescript
-import ApplePay from '@everypay/applepay-rn-bridge';
-import type { ApplePayBackendData } from '@everypay/applepay-rn-bridge';
-
-async function handlePayment() {
-  // 1. Check if Apple Pay is available
-  const canPay = await ApplePay.canMakePayments();
-  if (!canPay) {
-    console.log('Apple Pay not available');
-    return;
-  }
-
-  // 2. Fetch payment data from YOUR backend
-  const response = await fetch('https://your-backend.com/api/applepay/create-payment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: 10.50, orderId: 'order-123' }),
-  });
-  const backendData: ApplePayBackendData = await response.json();
-
-  // 3. Present Apple Pay sheet and get token
-  const tokenResult = await ApplePay.makePaymentWithBackendData(backendData);
-
-  // 4. Send token to YOUR backend for processing
-  await fetch('https://your-backend.com/api/applepay/process-token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      paymentReference: tokenResult.paymentReference,
-      mobileAccessToken: tokenResult.mobileAccessToken,
-      paymentData: tokenResult.paymentData,
-      transactionIdentifier: tokenResult.transactionIdentifier,
-    }),
-  });
-
-  console.log('Payment successful!');
+interface ApplePayBackendData {
+  merchantIdentifier: string;    // Apple Pay merchant ID (e.g., "merchant.com.example")
+  merchantName: string;          // Display name on payment sheet
+  amount: number;                // Payment amount
+  currencyCode: string;          // ISO 4217 (e.g., "EUR")
+  countryCode: string;           // ISO 3166-1 alpha-2 (e.g., "EE")
+  paymentReference: string;      // From EveryPay init response
+  mobileAccessToken: string;     // From EveryPay init response
+  authorizePaymentUrl: string;   // EveryPay authorize endpoint
+  recurring?: RecurringConfig;   // Optional recurring payment config
 }
 ```
 
-See [Custom Button Guide](./CUSTOM_BUTTON_GUIDE.md) for more details on custom button implementation.
+#### ApplePayTokenResult
 
-## Additional Guides
+Token data returned from SDK to be sent to backend:
 
-- **[Custom Button Implementation](./CUSTOM_BUTTON_GUIDE.md)** - Complete guide for implementing Apple Pay with your own custom-styled button, including component code, error handling, and best practices.
+```typescript
+interface ApplePayTokenResult {
+  success: boolean;
+  paymentData: string;             // Base64 encoded Apple Pay token
+  transactionIdentifier: string;   // Apple Pay transaction ID
+  paymentMethod: {
+    displayName: string;           // e.g., "Visa 1234"
+    network: string;               // e.g., "Visa"
+    type: number;
+  };
+  paymentReference: string;        // Pass-through from backend data
+  mobileAccessToken: string;       // Pass-through from backend data
+}
+```
 
-## Component Features
+#### ApplePaySDKConfig
 
-The `ApplePayButton` component provides:
+SDK mode configuration:
 
-- **Native PKPaymentButton** - Official Apple Pay button with multiple styles and types
-- **Auto-mode detection** - Automatically uses Backend or SDK mode based on props
-- **Availability check** - Only renders when Apple Pay is available on the device
-- **Full TypeScript support** - Type-safe props with discriminated unions
-- **Error handling** - Built-in callbacks for success, error, and cancellation
+```typescript
+interface ApplePaySDKConfig {
+  apiUsername: string;
+  apiSecret: string;
+  baseUrl: string;
+  accountName: string;
+  countryCode?: string;
+}
+```
+
+### Native Methods
+
+#### Backend Mode Methods
+
+```typescript
+// Check Apple Pay availability
+canMakePayments(): Promise<boolean>
+
+// Check if recurring tokens supported (iOS 16+)
+canRequestRecurringToken(): Promise<boolean>
+
+// Make payment with backend data
+makePaymentWithBackendData(
+  backendData: ApplePayBackendData
+): Promise<ApplePayTokenResult>
+
+// Request recurring token with backend data
+requestTokenWithBackendData(
+  backendData: ApplePayBackendData
+): Promise<ApplePayTokenResult>
+```
+
+#### SDK Mode Methods
+
+```typescript
+// Initialize payment with EveryPay
+initEverypayPayment(config: InitRequest): Promise<InitResult>
+
+// Full payment flow (init + present + authorize)
+startApplePayPayment(paymentRequest: PaymentRequest): Promise<PaymentResult>
+
+// Enable/disable mock payments (debug only)
+setMockPaymentsEnabled(enabled: boolean): Promise<boolean>
+```
 
 ### Button Styles
 
@@ -288,7 +329,6 @@ The `ApplePayButton` component provides:
 | `subscribe` | "Subscribe with Apple Pay" |
 | `order` | "Order with Apple Pay" |
 | `inStore` | "Pay with Apple Pay" |
-| `setUp` | "Set Up Apple Pay" |
 | `continue` | "Continue with Apple Pay" |
 | `reload` | "Reload with Apple Pay" |
 | `addMoney` | "Add Money with Apple Pay" |
@@ -298,270 +338,83 @@ The `ApplePayButton` component provides:
 | `contribute` | "Contribute with Apple Pay" |
 | `tip` | "Tip with Apple Pay" |
 
-## API Reference
+### Error Codes
 
-### Backend Mode Methods
+| Code | Description |
+|------|-------------|
+| `cancelled` | User canceled payment |
+| `invalid_config` | Invalid configuration |
+| `payment_error` | Payment processing error |
+| `payment_in_progress` | Another payment is already in progress |
+| `presentation_failed` | Failed to present Apple Pay sheet |
 
-#### `canMakePayments(): Promise<boolean>`
+## Documentation
 
-Check if Apple Pay is available on the device.
-
-```typescript
-const available = await ApplePay.canMakePayments();
-```
-
-#### `canRequestRecurringToken(): Promise<boolean>`
-
-Check if device supports recurring payment tokens (iOS 16+).
-
-```typescript
-const supportsRecurring = await ApplePay.canRequestRecurringToken();
-```
-
-#### `makePaymentWithBackendData(backendData: ApplePayBackendData): Promise<ApplePayTokenResult>`
-
-Present Apple Pay sheet with backend-provided data. Returns token for your backend to process.
-
-```typescript
-const tokenResult = await ApplePay.makePaymentWithBackendData({
-  merchantIdentifier: 'merchant.com.yourcompany',
-  merchantName: 'Your Store',
-  amount: 10.50,
-  currencyCode: 'EUR',
-  countryCode: 'EE',
-  paymentReference: 'ref_xxx',           // From EveryPay init
-  mobileAccessToken: 'token_xxx',        // From EveryPay init
-  authorizePaymentUrl: 'https://...',    // EveryPay authorize endpoint
-});
-```
-
-#### `requestTokenWithBackendData(backendData: ApplePayBackendData): Promise<ApplePayTokenResult>`
-
-Same as `makePaymentWithBackendData` but for recurring payment tokens. Requires `recurring` config.
-
-```typescript
-const tokenResult = await ApplePay.requestTokenWithBackendData({
-  ...backendData,
-  recurring: {
-    description: 'Monthly subscription',
-    managementURL: 'https://yoursite.com/manage-subscription',
-    billingLabel: 'Monthly Fee',
-    billingAgreement: 'You agree to be charged monthly.',
-  },
-});
-```
-
-### SDK Mode Methods
-
-#### `initEverypayPayment(config: InitRequest): Promise<InitResult>`
-
-Initialize payment with EveryPay backend (SDK mode only).
-
-```typescript
-const initResult = await ApplePay.initEverypayPayment({
-  baseUrl: 'https://payment.sandbox.lhv.ee',
-  auth: { apiUsername: '...', apiSecret: '...' },
-  data: {
-    accountName: 'EUR3D1',
-    amount: 10.50,
-    label: 'Product',
-    currencyCode: 'EUR',
-    countryCode: 'EE',
-  },
-});
-```
-
-#### `startApplePayPayment(config: PaymentRequest): Promise<PaymentResult>`
-
-Full payment flow - initializes, presents Apple Pay, and authorizes with backend.
-
-```typescript
-const result = await ApplePay.startApplePayPayment({
-  baseUrl: 'https://payment.sandbox.lhv.ee',
-  auth: { apiUsername: '...', apiSecret: '...' },
-  data: {
-    accountName: 'EUR3D1',
-    amount: 10.50,
-    label: 'Product',
-    currencyCode: 'EUR',
-    countryCode: 'EE',
-  },
-});
-```
-
-#### `startApplePayWithLateEverypayInit(config: InitRequest): Promise<PaymentResult>`
-
-Late initialization flow - presents Apple Pay first, then initializes with backend.
-
-### Debug Methods
-
-#### `setMockPaymentsEnabled(enabled: boolean): Promise<boolean>`
-
-Enable/disable mock payments (debug builds only).
-
-## Types
-
-### ApplePayBackendData
-
-Data structure your backend should return:
-
-```typescript
-interface ApplePayBackendData {
-  merchantIdentifier: string;    // Apple Pay merchant ID (e.g., "merchant.com.example")
-  merchantName: string;          // Display name on payment sheet
-  amount: number;                // Payment amount
-  currencyCode: string;          // ISO 4217 (e.g., "EUR")
-  countryCode: string;           // ISO 3166-1 alpha-2 (e.g., "EE")
-  paymentReference: string;      // From EveryPay init response
-  mobileAccessToken: string;     // From EveryPay init response
-  authorizePaymentUrl: string;   // EveryPay authorize endpoint
-  recurring?: RecurringConfig;   // Optional recurring payment config
-}
-```
-
-### ApplePayTokenResult
-
-Token returned from Apple Pay for backend processing:
-
-```typescript
-interface ApplePayTokenResult {
-  success: boolean;
-  paymentData: string;           // Base64 encoded Apple Pay token
-  transactionIdentifier: string;
-  paymentMethod: {
-    displayName: string;         // e.g., "Visa 1234"
-    network: string;             // e.g., "Visa"
-    type: number;
-  };
-  paymentReference: string;      // Pass-through from backend data
-  mobileAccessToken: string;     // Pass-through from backend data
-}
-```
-
-### RecurringConfig
-
-Configuration for recurring payment tokens (iOS 16+):
-
-```typescript
-interface RecurringConfig {
-  description: string;           // Shown in payment sheet
-  managementURL: string;         // URL to manage recurring payment
-  billingLabel?: string;         // Optional billing item label
-  billingAgreement?: string;     // Optional agreement text
-}
-```
-
-## Backend Integration Guide
-
-For Backend Mode, your backend needs to implement two endpoints:
-
-### 1. Create Payment Endpoint
-
-Combines EveryPay initialization and merchant ID lookup.
-
-```
-POST /api/applepay/create-payment
-
-Request body:
-{
-  "amount": 10.50,
-  "orderId": "your-order-id"
-}
-
-Your backend calls:
-1. POST https://payment.sandbox.lhv.ee/api/v4/payments/oneoff
-   → Returns paymentReference, mobileAccessToken
-
-2. GET https://payment.sandbox.lhv.ee/api/v4/sdk/payment_methods/{accountName}?amount={amount}
-   → Returns applePayMerchantIdentifier
-
-Response to app:
-{
-  "merchantIdentifier": "merchant.com.everypay.demo",
-  "merchantName": "Your Store",
-  "amount": 10.50,
-  "currencyCode": "EUR",
-  "countryCode": "EE",
-  "paymentReference": "ref_xxx",
-  "mobileAccessToken": "token_xxx",
-  "authorizePaymentUrl": "https://payment.sandbox.lhv.ee/api/v4/apple_pay/payment_data"
-}
-```
-
-### 2. Process Token Endpoint
-
-Sends Apple Pay token to EveryPay for authorization.
-
-```
-POST /api/applepay/process-token
-
-Request body (from app):
-{
-  "paymentReference": "ref_xxx",
-  "mobileAccessToken": "token_xxx",
-  "paymentData": "base64-encoded-token",
-  "transactionIdentifier": "xxx"
-}
-
-Your backend calls:
-POST https://payment.sandbox.lhv.ee/api/v4/apple_pay/payment_data
-Authorization: Bearer {mobileAccessToken}
-{
-  "payment_reference": "ref_xxx",
-  "payment_data": {decoded paymentData JSON}
-}
-
-Response to app:
-{
-  "success": true,
-  "state": "completed"
-}
-```
+- [Backend Integration Guide](./BACKEND_INTEGRATION.md) - How to implement backend endpoints
+- [Custom Button Implementation](./CUSTOM_BUTTON_GUIDE.md) - Using programmatic API with custom buttons
+- [TypeScript Types](./src/payment/types.ts) - Full type definitions
 
 ## Mode Comparison
 
 | Feature | Backend Mode | SDK Mode |
-|---------|-------------|----------|
+|---------|--------------|----------|
 | Recommended | Yes | No |
 | Security | Credentials on backend | Credentials in app |
-| Setup Complexity | Medium (requires backend) | Low |
+| Complexity | Medium (requires backend) | Low |
 | Maintainability | Easy to update logic | Requires app update |
-| Token Handling | User sends to backend | Library handles |
 
-## Error Handling
+## Troubleshooting
 
-```typescript
-import { PaymentError } from '@everypay/applepay-rn-bridge';
+### "Apple Pay not available"
 
-try {
-  const result = await ApplePay.makePaymentWithBackendData(backendData);
-} catch (error) {
-  if (error instanceof PaymentError) {
-    switch (error.code) {
-      case 'cancelled':
-        console.log('User cancelled payment');
-        break;
-      case 'invalid_config':
-        console.log('Invalid configuration');
-        break;
-      case 'payment_error':
-        console.log('Payment failed:', error.message);
-        break;
-      default:
-        console.log('Error:', error.code, error.message);
-    }
-  }
-}
-```
+- Ensure device has Apple Pay configured
+- Check that merchant ID is correctly set up in Apple Developer portal
+- Verify Apple Pay capability is added in Xcode
 
-## Migration from v1.x
+### "Payment already in progress"
 
-If upgrading from v1.x (SDK Mode only):
+- Wait for current payment to complete before starting new one
+- Check that you're not calling payment methods multiple times
 
-1. **No changes required** for existing SDK Mode usage
-2. **Recommended**: Migrate to Backend Mode for improved security
-3. Update `EverypayApplePay` SDK dependency in Podfile
+### "Invalid configuration"
+
+- Verify all required fields in `ApplePayBackendData` are present
+- Check that merchant identifier matches your Apple Developer setup
+
+### "Authorization failed"
+
+- Verify API credentials on backend
+- Check that mobileAccessToken is being passed correctly
+
+## Security Best Practices
+
+1. **Use Backend Mode if possible**
+2. **Never commit API credentials** to version control
+3. **Validate all inputs** on your backend
+4. **Use HTTPS** for all backend communications
+5. **Implement rate limiting** on backend endpoints
+6. **Log security events** on backend
+
+## Testing
+
+### Test Environment
+
+Use EveryPay sandbox URL (`https://payment.sandbox.lhv.ee`) with sandbox credentials.
+
+For Apple Pay testing:
+- Use [Apple Pay Sandbox Testing](https://developer.apple.com/apple-pay/sandbox-testing/)
+- Add sandbox tester accounts in App Store Connect
+
+## Important Notes
+
+- iOS only (Android not supported)
+- Requires Apple Developer account with Apple Pay configured
+- Complies with [Apple Pay Guidelines](https://developer.apple.com/apple-pay/marketing/)
 
 ## License
 
 MIT
+
+---
+
+Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
