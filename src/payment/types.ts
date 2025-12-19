@@ -69,8 +69,6 @@ export interface ApplePayBackendData {
   paymentReference: string;
   /** Mobile access token from EveryPay init */
   mobileAccessToken: string;
-  /** URL to send Apple Pay token to (for backend processing) */
-  authorizePaymentUrl: string;
   /** Optional: Enable recurring token request (iOS 16+) */
   recurring?: RecurringConfig;
 }

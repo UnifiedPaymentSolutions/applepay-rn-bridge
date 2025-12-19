@@ -235,7 +235,6 @@ interface ApplePayBackendData {
   countryCode: string;           // ISO 3166-1 alpha-2 (e.g., "EE")
   paymentReference: string;      // From EveryPay init response
   mobileAccessToken: string;     // From EveryPay init response
-  authorizePaymentUrl: string;   // EveryPay authorize endpoint
   recurring?: RecurringConfig;   // Optional recurring payment config
 }
 ```

@@ -114,7 +114,6 @@ app.post('/api/applepay/create-payment', async (req, res) => {
       countryCode: paymentData.descriptor_country || 'EE',
       paymentReference: paymentData.payment_reference,
       mobileAccessToken: paymentData.mobile_access_token,
-      authorizePaymentUrl: `${EVERYPAY_API_URL}/api/v4/apple_pay/payment_data`,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -132,8 +131,7 @@ app.post('/api/applepay/create-payment', async (req, res) => {
   "currencyCode": "EUR",
   "countryCode": "EE",
   "paymentReference": "abc123...",
-  "mobileAccessToken": "xyz789...",
-  "authorizePaymentUrl": "https://payment.sandbox.lhv.ee/api/v4/apple_pay/payment_data"
+  "mobileAccessToken": "xyz789..."
 }
 ```
 
