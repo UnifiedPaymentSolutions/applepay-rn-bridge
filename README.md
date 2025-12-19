@@ -99,7 +99,118 @@ Most secure approach - API credentials stay on your backend.
 - `POST /api/applepay/create-payment` - Initialize payment and fetch merchant ID
 - `POST /api/applepay/process-token` - Send Apple Pay token to EveryPay
 
-**Step 2:** Use in your app:
+**Step 2:** Use the `ApplePayButton` component:
+
+```typescript
+import React, { useState, useEffect } from 'react';
+import { ApplePayButton } from '@everypay/applepay-rn-bridge';
+import type { ApplePayBackendData, ApplePayTokenResult } from '@everypay/applepay-rn-bridge';
+
+function PaymentScreen() {
+  const [backendData, setBackendData] = useState<ApplePayBackendData | null>(null);
+
+  // Fetch payment data when component mounts
+  useEffect(() => {
+    const fetchPaymentData = async () => {
+      try {
+        const response = await fetch('https://your-backend.com/api/applepay/create-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: 10.50,
+            orderId: 'ORDER-123',
+          }),
+        });
+        const data = await response.json();
+        setBackendData(data);
+      } catch (error) {
+        console.error('Failed to prepare payment:', error);
+      }
+    };
+
+    fetchPaymentData();
+  }, []);
+
+  // Process the Apple Pay token
+  const handlePaymentToken = async (tokenData: ApplePayTokenResult) => {
+    const result = await fetch('https://your-backend.com/api/applepay/process-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tokenData),
+    });
+    return result.json();
+  };
+
+  // Show Apple Pay button only when backend data is ready
+  if (!backendData) {
+    return null; // Or show a loading indicator
+  }
+
+  return (
+    <ApplePayButton
+      backendData={backendData}
+      onPressCallback={handlePaymentToken}
+      onPaymentSuccess={(result) => console.log('Success!', result)}
+      onPaymentError={(error) => console.error('Payment failed:', error)}
+      onPaymentCanceled={() => console.log('Payment canceled')}
+      buttonStyle="black"
+      buttonType="buy"
+    />
+  );
+}
+```
+
+**How it works:**
+
+1. Component mounts → fetch payment data from your `/create-payment` endpoint
+2. When data arrives → Apple Pay button appears (native PKPaymentButton)
+3. User presses button → SDK shows Apple Pay sheet
+4. `onPressCallback` is called with the token → you send it to your `/process-token` endpoint
+5. Your backend processes the payment and returns the result
+
+---
+
+### SDK Mode
+
+API credentials stored in app (less secure, but simpler setup):
+
+```typescript
+import { ApplePayButton } from '@everypay/applepay-rn-bridge';
+
+function PaymentScreen() {
+  const handlePayment = async (result: any) => {
+    console.log('Payment result:', result);
+    return result;
+  };
+
+  return (
+    <ApplePayButton
+      config={{
+        apiUsername: 'YOUR_USERNAME',
+        apiSecret: 'YOUR_SECRET',
+        baseUrl: 'https://payment.sandbox.lhv.ee',
+        accountName: 'EUR3D1',
+        countryCode: 'EE',
+      }}
+      amount={10.50}
+      label="Product Purchase"
+      orderReference="ORDER-123"
+      customerEmail="customer@example.com"
+      onPressCallback={handlePayment}
+      onPaymentSuccess={(result) => console.log('Success!', result)}
+      onPaymentError={(error) => console.error('Error:', error)}
+      buttonStyle="black"
+      buttonType="buy"
+    />
+  );
+}
+```
+
+---
+
+### Programmatic API (Custom Button)
+
+If you prefer to use your own custom button design, use the programmatic API:
 
 ```typescript
 import ApplePay from '@everypay/applepay-rn-bridge';
@@ -140,40 +251,52 @@ async function handlePayment() {
 }
 ```
 
-### SDK Mode
-
-API credentials stored in app (less secure, but simpler setup):
-
-```typescript
-import ApplePay from '@everypay/applepay-rn-bridge';
-
-async function handlePayment() {
-  const canPay = await ApplePay.canMakePayments();
-  if (!canPay) return;
-
-  const result = await ApplePay.startApplePayPayment({
-    baseUrl: 'https://payment.sandbox.lhv.ee',  // or production/demo URL
-    auth: {
-      apiUsername: 'YOUR_API_USERNAME',
-      apiSecret: 'YOUR_API_SECRET',
-    },
-    data: {
-      accountName: 'EUR3D1',
-      amount: 10.50,
-      label: 'Product Purchase',
-      currencyCode: 'EUR',
-      countryCode: 'EE',
-      orderReference: `order-${Date.now()}`,
-    },
-  });
-
-  console.log('Payment successful:', result.paymentReference);
-}
-```
+See [Custom Button Guide](./CUSTOM_BUTTON_GUIDE.md) for more details on custom button implementation.
 
 ## Additional Guides
 
 - **[Custom Button Implementation](./CUSTOM_BUTTON_GUIDE.md)** - Complete guide for implementing Apple Pay with your own custom-styled button, including component code, error handling, and best practices.
+
+## Component Features
+
+The `ApplePayButton` component provides:
+
+- **Native PKPaymentButton** - Official Apple Pay button with multiple styles and types
+- **Auto-mode detection** - Automatically uses Backend or SDK mode based on props
+- **Availability check** - Only renders when Apple Pay is available on the device
+- **Full TypeScript support** - Type-safe props with discriminated unions
+- **Error handling** - Built-in callbacks for success, error, and cancellation
+
+### Button Styles
+
+| Style | Description |
+|-------|-------------|
+| `black` | Black background (default) |
+| `white` | White background |
+| `whiteOutline` | White background with black outline |
+| `automatic` | Adapts to the current appearance (iOS 14+) |
+
+### Button Types
+
+| Type | Button Text |
+|------|-------------|
+| `plain` | Apple Pay logo only (default) |
+| `buy` | "Buy with Apple Pay" |
+| `checkout` | "Check out with Apple Pay" |
+| `donate` | "Donate with Apple Pay" |
+| `book` | "Book with Apple Pay" |
+| `subscribe` | "Subscribe with Apple Pay" |
+| `order` | "Order with Apple Pay" |
+| `inStore` | "Pay with Apple Pay" |
+| `setUp` | "Set Up Apple Pay" |
+| `continue` | "Continue with Apple Pay" |
+| `reload` | "Reload with Apple Pay" |
+| `addMoney` | "Add Money with Apple Pay" |
+| `topUp` | "Top Up with Apple Pay" |
+| `rent` | "Rent with Apple Pay" |
+| `support` | "Support with Apple Pay" |
+| `contribute` | "Contribute with Apple Pay" |
+| `tip` | "Tip with Apple Pay" |
 
 ## API Reference
 

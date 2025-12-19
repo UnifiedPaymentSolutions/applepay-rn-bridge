@@ -1,4 +1,52 @@
 // =============================================================================
+// APPLE PAY BUTTON TYPES
+// =============================================================================
+
+/**
+ * Apple Pay button style (PKPaymentButtonStyle)
+ */
+export type ApplePayButtonStyle = 'black' | 'white' | 'whiteOutline' | 'automatic';
+
+/**
+ * Apple Pay button type (PKPaymentButtonType)
+ * These map to the text shown on the button
+ */
+export type ApplePayButtonType =
+  | 'plain'      // Apple Pay logo only
+  | 'buy'        // "Buy with Apple Pay"
+  | 'setUp'      // "Set Up Apple Pay"
+  | 'inStore'    // "Pay with Apple Pay"
+  | 'donate'     // "Donate with Apple Pay"
+  | 'checkout'   // "Check out with Apple Pay"
+  | 'book'       // "Book with Apple Pay"
+  | 'subscribe'  // "Subscribe with Apple Pay"
+  | 'reload'     // "Reload with Apple Pay"
+  | 'addMoney'   // "Add Money with Apple Pay"
+  | 'topUp'      // "Top Up with Apple Pay"
+  | 'order'      // "Order with Apple Pay"
+  | 'rent'       // "Rent with Apple Pay"
+  | 'support'    // "Support with Apple Pay"
+  | 'contribute' // "Contribute with Apple Pay"
+  | 'tip'        // "Tip with Apple Pay"
+  | 'continue';  // "Continue with Apple Pay"
+
+/**
+ * SDK Configuration for the button component
+ */
+export interface ApplePaySDKConfig {
+  /** Backend API username */
+  apiUsername: string;
+  /** Backend API secret */
+  apiSecret: string;
+  /** Backend API base URL */
+  baseUrl: string;
+  /** Account name (e.g., "EUR3D1") */
+  accountName: string;
+  /** ISO 3166-1 alpha-2 country code (e.g., "EE") */
+  countryCode?: string;
+}
+
+// =============================================================================
 // BACKEND MODE TYPES (Recommended)
 // =============================================================================
 
