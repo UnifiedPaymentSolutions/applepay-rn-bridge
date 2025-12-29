@@ -36,7 +36,6 @@ interface NativeApplePayButtonProps {
   buttonStyle: string;
   buttonType: string;
   cornerRadius: number;
-  onPress: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -308,7 +307,6 @@ export function ApplePayButton(props: ApplePayButtonProps): React.ReactElement |
           buttonStyle={buttonStyle}
           buttonType={buttonType}
           cornerRadius={cornerRadius}
-          onPress={handlePress}
           style={styles.nativeButton}
         />
       </View>

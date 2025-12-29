@@ -14,11 +14,9 @@
     "build": "npm run clean && tsc",
     "prepare": "npm run build"
   },
-  "dependencies": {
-    "react": "^19.1.0",
-    "react-native": "^0.78.2"
-  },
   "devDependencies": {
+    "react": "^19.1.0",
+    "react-native": "^0.78.2",
     "@react-native-community/cli": "^18.0.0",
     "@types/jest": "^29.5.14",
     "@types/react": "^19.1.0",
