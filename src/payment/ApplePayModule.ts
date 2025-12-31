@@ -6,7 +6,7 @@
  * - SDK Mode: Library makes API calls
  */
 
-import { NativeModules, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import type {
   PaymentResult,
   InitResult,
@@ -14,39 +14,23 @@ import type {
   PaymentRequest,
   ApplePayBackendData,
   ApplePayTokenResult,
-  NativeApplePayModuleV2,
   SDKConfigureRequest,
   NativeTokenResult,
 } from './types';
 import { PaymentError } from './types';
 import { everypayApiService } from './api';
-import {
-  API_AUTHORIZE_PAYMENT_PATH,
-} from './constants';
+import { API_AUTHORIZE_PAYMENT_PATH } from './constants';
 
 // =============================================================================
 // MODULE SETUP
 // =============================================================================
 
-const MODULE_NAME = 'ApplePayModule';
-const ApplePayNativeModule = NativeModules[MODULE_NAME];
-
-// Check if native module exists (iOS only)
-if (Platform.OS === 'ios' && !ApplePayNativeModule) {
-  console.error(
-    `Native module "${MODULE_NAME}" not found.` +
-      `\nPlatform: ${Platform.OS}` +
-      `\nAvailable modules: ${Object.keys(NativeModules).join(', ')}` +
-      '\n\nTroubleshooting:' +
-      '\n- Ensure you have run "pod install" in the "ios" directory.' +
-      '\n- Make sure EverypayApplePay pod is installed.' +
-      '\n- Rebuild the app (e.g., "npx react-native run-ios").'
-  );
-  throw new Error(`Native module "${MODULE_NAME}" not found.`);
-}
-
-// Cast to new interface
-const TypedNativeModule = ApplePayNativeModule as NativeApplePayModuleV2;
+// Conditionally import native module (iOS only)
+// TurboModuleRegistry handles both Old and New Architecture automatically
+const NativeModule =
+  Platform.OS === 'ios'
+    ? require('../specs/NativeApplePayModule').default
+    : null;
 
 // =============================================================================
 // BACKEND MODE (Recommended)
@@ -75,11 +59,11 @@ async function makePaymentWithBackendData(
       recurring: backendData.recurring,
     };
 
-    await TypedNativeModule.configure(configRequest);
+    await NativeModule!.configure(configRequest);
     console.log('[ApplePay RN] SDK configured');
 
     // 2. Present Apple Pay sheet
-    const tokenResult: NativeTokenResult = await TypedNativeModule.presentPayment();
+    const tokenResult: NativeTokenResult = await NativeModule!.presentPayment();
     console.log('[ApplePay RN] Apple Pay token received');
 
     // 3. Return token with backend data for user to process
@@ -93,7 +77,12 @@ async function makePaymentWithBackendData(
     };
   } catch (error: unknown) {
     console.error('[ApplePay RN] Error in makePaymentWithBackendData:', error);
-    if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      'message' in error
+    ) {
       const typedError = error as { code: string; message: string };
       throw new PaymentError(typedError.message, typedError.code);
     }
@@ -133,7 +122,7 @@ async function canMakePayments(): Promise<boolean> {
     return false;
   }
   try {
-    const result = await TypedNativeModule.canMakePayments();
+    const result = await NativeModule!.canMakePayments();
     console.log('[ApplePay RN] canMakePayments result:', result);
     return result;
   } catch (error: unknown) {
@@ -150,9 +139,12 @@ async function canRequestRecurringToken(): Promise<boolean> {
     return false;
   }
   try {
-    return await TypedNativeModule.canRequestRecurringToken();
+    return await NativeModule!.canRequestRecurringToken();
   } catch (error: unknown) {
-    console.warn('[ApplePay RN] Failed to check recurring token support:', error);
+    console.warn(
+      '[ApplePay RN] Failed to check recurring token support:',
+      error
+    );
     return false;
   }
 }
@@ -193,7 +185,12 @@ async function initEverypayPayment(config: InitRequest): Promise<InitResult> {
     };
   } catch (error: unknown) {
     console.error('[ApplePay RN] Error in initEverypayPayment:', error);
-    if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      'message' in error
+    ) {
       const typedError = error as { code: string; message: string };
       throw new PaymentError(typedError.message, typedError.code);
     }
@@ -213,7 +210,8 @@ async function startApplePayPayment(
 
   try {
     const { auth, data, baseUrl } = paymentRequest;
-    const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
+    const amount =
+      typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
 
     // 1. Get payment methods to retrieve Apple Pay merchant identifier
     const paymentMethods = await everypayApiService.getPaymentMethods({
@@ -222,7 +220,10 @@ async function startApplePayPayment(
       accountName: data.accountName,
       amount,
     });
-    console.log('[ApplePay RN] Got Apple Pay merchant ID:', paymentMethods.applePayMerchantIdentifier);
+    console.log(
+      '[ApplePay RN] Got Apple Pay merchant ID:',
+      paymentMethods.applePayMerchantIdentifier
+    );
 
     // 2. Initialize payment with backend
     const initResponse = await everypayApiService.initializePayment({
@@ -234,7 +235,10 @@ async function startApplePayPayment(
         orderReference: data.orderReference,
       },
     });
-    console.log('[ApplePay RN] Payment initialized, reference:', initResponse.paymentReference);
+    console.log(
+      '[ApplePay RN] Payment initialized, reference:',
+      initResponse.paymentReference
+    );
 
     // 3. Configure SDK
     const configRequest: SDKConfigureRequest = {
@@ -245,11 +249,11 @@ async function startApplePayPayment(
       countryCode: data.countryCode || 'EE',
     };
 
-    await TypedNativeModule.configure(configRequest);
+    await NativeModule!.configure(configRequest);
     console.log('[ApplePay RN] SDK configured');
 
     // 4. Present Apple Pay sheet
-    const tokenResult = await TypedNativeModule.presentPayment();
+    const tokenResult = await NativeModule!.presentPayment();
     console.log('[ApplePay RN] Apple Pay token received');
 
     // 5. Decode and authorize with backend
@@ -261,7 +265,10 @@ async function startApplePayPayment(
       paymentReference: initResponse.paymentReference,
       paymentData: paymentDataJson,
     });
-    console.log('[ApplePay RN] Payment authorized, state:', authorizeResponse.state);
+    console.log(
+      '[ApplePay RN] Payment authorized, state:',
+      authorizeResponse.state
+    );
 
     // 6. Check authorization result
     const successStates = ['completed', 'authorized', 'captured'];
@@ -283,7 +290,12 @@ async function startApplePayPayment(
     if (error instanceof PaymentError) {
       throw error;
     }
-    if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      'message' in error
+    ) {
       const typedError = error as { code: string; message: string };
       throw new PaymentError(typedError.message, typedError.code);
     }
@@ -300,7 +312,7 @@ async function setMockPaymentsEnabled(enabled: boolean): Promise<boolean> {
     return false;
   }
   try {
-    const result = await TypedNativeModule.setMockPaymentsEnabled(enabled);
+    const result = await NativeModule!.setMockPaymentsEnabled(enabled);
     console.log('[ApplePay RN] setMockPaymentsEnabled result:', result);
     return result.success === true;
   } catch (error: unknown) {
@@ -315,8 +327,12 @@ async function setMockPaymentsEnabled(enabled: boolean): Promise<boolean> {
 
 export interface ApplePayInterface {
   // Backend Mode (Recommended)
-  makePaymentWithBackendData(backendData: ApplePayBackendData): Promise<ApplePayTokenResult>;
-  requestTokenWithBackendData(backendData: ApplePayBackendData): Promise<ApplePayTokenResult>;
+  makePaymentWithBackendData(
+    backendData: ApplePayBackendData
+  ): Promise<ApplePayTokenResult>;
+  requestTokenWithBackendData(
+    backendData: ApplePayBackendData
+  ): Promise<ApplePayTokenResult>;
 
   // SDK Mode (Backwards Compatible)
   canMakePayments(): Promise<boolean>;
@@ -343,8 +359,10 @@ const ApplePay: ApplePayInterface =
       }
     : {
         // Non-iOS platform stubs
-        makePaymentWithBackendData: () => Promise.resolve({} as ApplePayTokenResult),
-        requestTokenWithBackendData: () => Promise.resolve({} as ApplePayTokenResult),
+        makePaymentWithBackendData: () =>
+          Promise.resolve({} as ApplePayTokenResult),
+        requestTokenWithBackendData: () =>
+          Promise.resolve({} as ApplePayTokenResult),
         canMakePayments: () => Promise.resolve(false),
         canRequestRecurringToken: () => Promise.resolve(false),
         initEverypayPayment: () => Promise.resolve({} as InitResult),

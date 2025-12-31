@@ -23,17 +23,19 @@ describe.skip('ApplePayModule', () => {
         currencyCode: 'USD',
         countryCode: 'US',
         label: 'Test Item',
-      }
+      },
     };
-    
+
     startApplePayPayment(config);
-    expect(NativeModules.ApplePayModule.startApplePay).toHaveBeenCalledWith(config);
+    expect(NativeModules.ApplePayModule.startApplePay).toHaveBeenCalledWith(
+      config
+    );
   });
 
   it('checks if device can make Apple Pay payments', async () => {
     // Mock the native module response
     NativeModules.ApplePayModule.canMakePayments.mockResolvedValue(true);
-    
+
     const result = await canMakePayments();
     expect(result).toBe(true);
     expect(NativeModules.ApplePayModule.canMakePayments).toHaveBeenCalled();

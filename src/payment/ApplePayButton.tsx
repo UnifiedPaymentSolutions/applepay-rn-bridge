@@ -37,12 +37,31 @@ interface NativeApplePayButtonProps {
   buttonType: string;
   cornerRadius: number;
   style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
 }
 
 // Load native component only on iOS
-const NativeApplePayButton = Platform.OS === 'ios'
-  ? requireNativeComponent<NativeApplePayButtonProps>('ApplePayButton')
-  : null;
+// Uses Fabric component on New Architecture, requireNativeComponent on Old Architecture
+const NativeApplePayButton =
+  Platform.OS === 'ios'
+    ? (() => {
+        try {
+          // @ts-ignore - global.nativeFabricUIManager is injected by React Native
+          const isFabricEnabled = global.nativeFabricUIManager != null;
+          return isFabricEnabled
+            ? require('../specs/ApplePayButtonNativeComponent').default
+            : requireNativeComponent<NativeApplePayButtonProps>(
+                'ApplePayButton'
+              );
+        } catch (error) {
+          console.warn(
+            '[ApplePayButton] Native component not available:',
+            error
+          );
+          return null;
+        }
+      })()
+    : null;
 
 // =============================================================================
 // COMPONENT PROPS
@@ -108,7 +127,9 @@ interface ApplePayButtonSDKProps extends ApplePayButtonCommonProps {
 /**
  * ApplePayButton props - either Backend Mode or SDK Mode
  */
-export type ApplePayButtonProps = ApplePayButtonBackendProps | ApplePayButtonSDKProps;
+export type ApplePayButtonProps =
+  | ApplePayButtonBackendProps
+  | ApplePayButtonSDKProps;
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -117,7 +138,9 @@ export type ApplePayButtonProps = ApplePayButtonBackendProps | ApplePayButtonSDK
 /**
  * Check if props are for Backend Mode
  */
-function isBackendMode(props: ApplePayButtonProps): props is ApplePayButtonBackendProps {
+function isBackendMode(
+  props: ApplePayButtonProps
+): props is ApplePayButtonBackendProps {
   return 'backendData' in props && props.backendData !== undefined;
 }
 
@@ -166,7 +189,9 @@ function isBackendMode(props: ApplePayButtonProps): props is ApplePayButtonBacke
  * />
  * ```
  */
-export function ApplePayButton(props: ApplePayButtonProps): React.ReactElement | null {
+export function ApplePayButton(
+  props: ApplePayButtonProps
+): React.ReactElement | null {
   const {
     buttonStyle = 'black',
     buttonType = 'plain',
@@ -202,11 +227,16 @@ export function ApplePayButton(props: ApplePayButtonProps): React.ReactElement |
         if (isMounted.current) {
           setIsReady(canPay);
           if (!canPay) {
-            console.log('[ApplePayButton] Apple Pay is not available on this device');
+            console.log(
+              '[ApplePayButton] Apple Pay is not available on this device'
+            );
           }
         }
       } catch (error) {
-        console.error('[ApplePayButton] Error checking Apple Pay availability:', error);
+        console.error(
+          '[ApplePayButton] Error checking Apple Pay availability:',
+          error
+        );
         if (isMounted.current) {
           setIsReady(false);
         }
@@ -229,7 +259,9 @@ export function ApplePayButton(props: ApplePayButtonProps): React.ReactElement |
     try {
       if (isBackendMode(props)) {
         // Backend Mode: Use makePaymentWithBackendData
-        const tokenResult = await ApplePay.makePaymentWithBackendData(props.backendData);
+        const tokenResult = await ApplePay.makePaymentWithBackendData(
+          props.backendData
+        );
 
         // Call the user's callback to process the token
         await props.onPressCallback(tokenResult);
@@ -264,11 +296,17 @@ export function ApplePayButton(props: ApplePayButtonProps): React.ReactElement |
     } catch (error: unknown) {
       if (!isMounted.current) return;
 
-      const errorObj = error instanceof Error ? error : new Error(String(error));
+      const errorObj =
+        error instanceof Error ? error : new Error(String(error));
 
       // Check if user cancelled
-      if (errorObj.message?.includes('cancelled') ||
-          (error && typeof error === 'object' && 'code' in error && error.code === 'cancelled')) {
+      if (
+        errorObj.message?.includes('cancelled') ||
+        (error &&
+          typeof error === 'object' &&
+          'code' in error &&
+          error.code === 'cancelled')
+      ) {
         onPaymentCanceled?.();
       } else {
         onPaymentError?.(errorObj);

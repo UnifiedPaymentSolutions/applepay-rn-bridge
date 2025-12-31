@@ -228,14 +228,14 @@ Data structure from backend for payment initialization:
 
 ```typescript
 interface ApplePayBackendData {
-  merchantIdentifier: string;    // Apple Pay merchant ID (e.g., "merchant.com.example")
-  merchantName: string;          // Display name on payment sheet
-  amount: number;                // Payment amount
-  currencyCode: string;          // ISO 4217 (e.g., "EUR")
-  countryCode: string;           // ISO 3166-1 alpha-2 (e.g., "EE")
-  paymentReference: string;      // From EveryPay init response
-  mobileAccessToken: string;     // From EveryPay init response
-  recurring?: RecurringConfig;   // Optional recurring payment config
+  merchantIdentifier: string; // Apple Pay merchant ID (e.g., "merchant.com.example")
+  merchantName: string; // Display name on payment sheet
+  amount: number; // Payment amount
+  currencyCode: string; // ISO 4217 (e.g., "EUR")
+  countryCode: string; // ISO 3166-1 alpha-2 (e.g., "EE")
+  paymentReference: string; // From EveryPay init response
+  mobileAccessToken: string; // From EveryPay init response
+  recurring?: RecurringConfig; // Optional recurring payment config
 }
 ```
 
@@ -246,15 +246,15 @@ Token data returned from SDK to be sent to backend:
 ```typescript
 interface ApplePayTokenResult {
   success: boolean;
-  paymentData: string;             // Base64 encoded Apple Pay token
-  transactionIdentifier: string;   // Apple Pay transaction ID
+  paymentData: string; // Base64 encoded Apple Pay token
+  transactionIdentifier: string; // Apple Pay transaction ID
   paymentMethod: {
-    displayName: string;           // e.g., "Visa 1234"
-    network: string;               // e.g., "Visa"
+    displayName: string; // e.g., "Visa 1234"
+    network: string; // e.g., "Visa"
     type: number;
   };
-  paymentReference: string;        // Pass-through from backend data
-  mobileAccessToken: string;       // Pass-through from backend data
+  paymentReference: string; // Pass-through from backend data
+  mobileAccessToken: string; // Pass-through from backend data
 }
 ```
 
@@ -309,43 +309,43 @@ setMockPaymentsEnabled(enabled: boolean): Promise<boolean>
 
 ### Button Styles
 
-| Style | Description |
-|-------|-------------|
-| `black` | Black background (default) |
-| `white` | White background |
-| `whiteOutline` | White background with black outline |
-| `automatic` | Adapts to the current appearance (iOS 14+) |
+| Style          | Description                                |
+| -------------- | ------------------------------------------ |
+| `black`        | Black background (default)                 |
+| `white`        | White background                           |
+| `whiteOutline` | White background with black outline        |
+| `automatic`    | Adapts to the current appearance (iOS 14+) |
 
 ### Button Types
 
-| Type | Button Text |
-|------|-------------|
-| `plain` | Apple Pay logo only (default) |
-| `buy` | "Buy with Apple Pay" |
-| `checkout` | "Check out with Apple Pay" |
-| `donate` | "Donate with Apple Pay" |
-| `book` | "Book with Apple Pay" |
-| `subscribe` | "Subscribe with Apple Pay" |
-| `order` | "Order with Apple Pay" |
-| `inStore` | "Pay with Apple Pay" |
-| `continue` | "Continue with Apple Pay" |
-| `reload` | "Reload with Apple Pay" |
-| `addMoney` | "Add Money with Apple Pay" |
-| `topUp` | "Top Up with Apple Pay" |
-| `rent` | "Rent with Apple Pay" |
-| `support` | "Support with Apple Pay" |
-| `contribute` | "Contribute with Apple Pay" |
-| `tip` | "Tip with Apple Pay" |
+| Type         | Button Text                   |
+| ------------ | ----------------------------- |
+| `plain`      | Apple Pay logo only (default) |
+| `buy`        | "Buy with Apple Pay"          |
+| `checkout`   | "Check out with Apple Pay"    |
+| `donate`     | "Donate with Apple Pay"       |
+| `book`       | "Book with Apple Pay"         |
+| `subscribe`  | "Subscribe with Apple Pay"    |
+| `order`      | "Order with Apple Pay"        |
+| `inStore`    | "Pay with Apple Pay"          |
+| `continue`   | "Continue with Apple Pay"     |
+| `reload`     | "Reload with Apple Pay"       |
+| `addMoney`   | "Add Money with Apple Pay"    |
+| `topUp`      | "Top Up with Apple Pay"       |
+| `rent`       | "Rent with Apple Pay"         |
+| `support`    | "Support with Apple Pay"      |
+| `contribute` | "Contribute with Apple Pay"   |
+| `tip`        | "Tip with Apple Pay"          |
 
 ### Error Codes
 
-| Code | Description |
-|------|-------------|
-| `cancelled` | User canceled payment |
-| `invalid_config` | Invalid configuration |
-| `payment_error` | Payment processing error |
+| Code                  | Description                            |
+| --------------------- | -------------------------------------- |
+| `cancelled`           | User canceled payment                  |
+| `invalid_config`      | Invalid configuration                  |
+| `payment_error`       | Payment processing error               |
 | `payment_in_progress` | Another payment is already in progress |
-| `presentation_failed` | Failed to present Apple Pay sheet |
+| `presentation_failed` | Failed to present Apple Pay sheet      |
 
 ## Documentation
 
@@ -355,12 +355,12 @@ setMockPaymentsEnabled(enabled: boolean): Promise<boolean>
 
 ## Mode Comparison
 
-| Feature | Backend Mode | SDK Mode |
-|---------|--------------|----------|
-| Recommended | Yes | No |
-| Security | Credentials on backend | Credentials in app |
-| Complexity | Medium (requires backend) | Low |
-| Maintainability | Easy to update logic | Requires app update |
+| Feature         | Backend Mode              | SDK Mode            |
+| --------------- | ------------------------- | ------------------- |
+| Recommended     | Yes                       | No                  |
+| Security        | Credentials on backend    | Credentials in app  |
+| Complexity      | Medium (requires backend) | Low                 |
+| Maintainability | Easy to update logic      | Requires app update |
 
 ## Troubleshooting
 
@@ -401,6 +401,7 @@ setMockPaymentsEnabled(enabled: boolean): Promise<boolean>
 Use EveryPay sandbox URL (`https://payment.sandbox.lhv.ee`) with sandbox credentials.
 
 For Apple Pay testing:
+
 - Use [Apple Pay Sandbox Testing](https://developer.apple.com/apple-pay/sandbox-testing/)
 - Add sandbox tester accounts in App Store Connect
 

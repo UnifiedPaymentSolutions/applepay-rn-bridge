@@ -5,30 +5,34 @@
 /**
  * Apple Pay button style (PKPaymentButtonStyle)
  */
-export type ApplePayButtonStyle = 'black' | 'white' | 'whiteOutline' | 'automatic';
+export type ApplePayButtonStyle =
+  | 'black'
+  | 'white'
+  | 'whiteOutline'
+  | 'automatic';
 
 /**
  * Apple Pay button type (PKPaymentButtonType)
  * These map to the text shown on the button
  */
 export type ApplePayButtonType =
-  | 'plain'      // Apple Pay logo only
-  | 'buy'        // "Buy with Apple Pay"
-  | 'setUp'      // "Set Up Apple Pay"
-  | 'inStore'    // "Pay with Apple Pay"
-  | 'donate'     // "Donate with Apple Pay"
-  | 'checkout'   // "Check out with Apple Pay"
-  | 'book'       // "Book with Apple Pay"
-  | 'subscribe'  // "Subscribe with Apple Pay"
-  | 'reload'     // "Reload with Apple Pay"
-  | 'addMoney'   // "Add Money with Apple Pay"
-  | 'topUp'      // "Top Up with Apple Pay"
-  | 'order'      // "Order with Apple Pay"
-  | 'rent'       // "Rent with Apple Pay"
-  | 'support'    // "Support with Apple Pay"
+  | 'plain' // Apple Pay logo only
+  | 'buy' // "Buy with Apple Pay"
+  | 'setUp' // "Set Up Apple Pay"
+  | 'inStore' // "Pay with Apple Pay"
+  | 'donate' // "Donate with Apple Pay"
+  | 'checkout' // "Check out with Apple Pay"
+  | 'book' // "Book with Apple Pay"
+  | 'subscribe' // "Subscribe with Apple Pay"
+  | 'reload' // "Reload with Apple Pay"
+  | 'addMoney' // "Add Money with Apple Pay"
+  | 'topUp' // "Top Up with Apple Pay"
+  | 'order' // "Order with Apple Pay"
+  | 'rent' // "Rent with Apple Pay"
+  | 'support' // "Support with Apple Pay"
   | 'contribute' // "Contribute with Apple Pay"
-  | 'tip'        // "Tip with Apple Pay"
-  | 'continue';  // "Continue with Apple Pay"
+  | 'tip' // "Tip with Apple Pay"
+  | 'continue'; // "Continue with Apple Pay"
 
 /**
  * SDK Configuration for the button component
@@ -136,9 +140,7 @@ export interface AuthCredentials {
  * Backend API endpoint URLs.
  */
 export interface InitEndpoints {
-
   mobileOneoffUrl: string;
-
 }
 
 /**
@@ -206,12 +208,11 @@ export interface InitRequestData {
  * and used to configure the Apple Pay sheet.
  */
 export interface PaymentRequestData {
-
   /** Backend account name (optional, defaults to "EUR3D1" in native code). */
   accountName: string;
 
   /** Payment amount as a number (e.g., 10.99). */
-  amount: string | number;
+  amount: string | number;
 
   /** Everypay payment reference */
   paymentReference?: string;
@@ -230,7 +231,6 @@ export interface PaymentRequestData {
 
   /** Payment description displayed on the Apple Pay sheet (e.g., "Payment for Order"). */
   label?: string;
-
 }
 
 export interface InitRequest {

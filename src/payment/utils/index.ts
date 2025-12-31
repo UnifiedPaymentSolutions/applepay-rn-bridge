@@ -5,7 +5,9 @@ import {
 } from '../constants';
 import { InitEndpoints, StartEndpoints } from '../types';
 
-export function getInitPaymentEndpoints(everypayBaseUrl: string): InitEndpoints {
+export function getInitPaymentEndpoints(
+  everypayBaseUrl: string
+): InitEndpoints {
   if (!everypayBaseUrl) {
     throw new Error('Payment link is required');
   }
@@ -19,7 +21,9 @@ export function getInitPaymentEndpoints(everypayBaseUrl: string): InitEndpoints 
   }
 }
 
-export function getStartPaymentEndpoints(everypayBaseUrl: string): StartEndpoints {
+export function getStartPaymentEndpoints(
+  everypayBaseUrl: string
+): StartEndpoints {
   if (!everypayBaseUrl) {
     throw new Error('Payment link is required');
   }

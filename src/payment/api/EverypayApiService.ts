@@ -137,8 +137,11 @@ export class EverypayApiService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        Accept: 'application/json',
-        Authorization: createBasicAuthHeader(auth.apiUsername, auth.apiSecret),
+        'Accept': 'application/json',
+        'Authorization': createBasicAuthHeader(
+          auth.apiUsername,
+          auth.apiSecret
+        ),
       },
       body: JSON.stringify(body),
     });
@@ -155,10 +158,7 @@ export class EverypayApiService {
     console.log('[EverypayApiService] Init response received');
 
     // Validate required fields
-    if (
-      !jsonResponse.payment_reference ||
-      !jsonResponse.mobile_access_token
-    ) {
+    if (!jsonResponse.payment_reference || !jsonResponse.mobile_access_token) {
       console.error(
         '[EverypayApiService] Missing required fields in init response'
       );
@@ -185,7 +185,9 @@ export class EverypayApiService {
    * Get payment methods including Apple Pay merchant identifier
    * GET /api/v4/sdk/payment_methods/{account_name}
    */
-  async getPaymentMethods(config: PaymentMethodsConfig): Promise<PaymentMethodsResponse> {
+  async getPaymentMethods(
+    config: PaymentMethodsConfig
+  ): Promise<PaymentMethodsResponse> {
     const { baseUrl, apiUsername, accountName, amount } = config;
     const url = `${baseUrl}${API_PAYMENT_METHODS_PATH}/${accountName}?api_username=${apiUsername}&amount=${formatAmount(amount)}`;
 
@@ -203,7 +205,9 @@ export class EverypayApiService {
       console.error(
         `[EverypayApiService] Payment methods request failed with HTTP ${response.status}: ${errorBody}`
       );
-      throw new Error(`Payment methods request failed with HTTP status ${response.status}`);
+      throw new Error(
+        `Payment methods request failed with HTTP status ${response.status}`
+      );
     }
 
     const jsonResponse = await response.json();
@@ -220,10 +224,14 @@ export class EverypayApiService {
     }
 
     if (!applePayMethod.ios_identifier) {
-      throw new Error('Apple Pay merchant identifier (ios_identifier) not found in response');
+      throw new Error(
+        'Apple Pay merchant identifier (ios_identifier) not found in response'
+      );
     }
 
-    console.log(`[EverypayApiService] Apple Pay merchant ID: ${applePayMethod.ios_identifier}`);
+    console.log(
+      `[EverypayApiService] Apple Pay merchant ID: ${applePayMethod.ios_identifier}`
+    );
 
     return {
       applePayMerchantIdentifier: applePayMethod.ios_identifier,
@@ -244,14 +252,16 @@ export class EverypayApiService {
       paymentData: paymentData,
     };
 
-    console.log(`[EverypayApiService] Sending authorization request to: ${authorizeUrl}`);
+    console.log(
+      `[EverypayApiService] Sending authorization request to: ${authorizeUrl}`
+    );
 
     const response = await fetch(authorizeUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });

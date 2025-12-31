@@ -46,7 +46,7 @@ Initializes the payment and fetches the Apple Pay merchant identifier from Every
 
 ```json
 {
-  "amount": 10.50,
+  "amount": 10.5,
   "label": "Product Purchase",
   "orderReference": "ORDER-123",
   "customerEmail": "customer@example.com",
@@ -67,13 +67,15 @@ app.post('/api/applepay/create-payment', async (req, res) => {
       {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       }
     );
 
     const methodsData = await methodsResponse.json();
-    const applePayMethod = methodsData.payment_methods.find(m => m.source === 'apple_pay');
+    const applePayMethod = methodsData.payment_methods.find(
+      (m) => m.source === 'apple_pay'
+    );
 
     if (!applePayMethod || !applePayMethod.ios_identifier) {
       throw new Error('Apple Pay not available for this account');
@@ -127,7 +129,7 @@ app.post('/api/applepay/create-payment', async (req, res) => {
 {
   "merchantIdentifier": "merchant.com.yourcompany.app",
   "merchantName": "Your Store",
-  "amount": 10.50,
+  "amount": 10.5,
   "currencyCode": "EUR",
   "countryCode": "EE",
   "paymentReference": "abc123...",
@@ -187,7 +189,11 @@ app.post('/api/applepay/process-token', async (req, res) => {
     const result = await processResponse.json();
 
     // Check payment state
-    if (result.state === 'settled' || result.state === 'authorized' || result.state === 'completed') {
+    if (
+      result.state === 'settled' ||
+      result.state === 'authorized' ||
+      result.state === 'completed'
+    ) {
       res.json({
         success: true,
         state: result.state,
@@ -232,11 +238,11 @@ function generateNonce() {
 
 ## EveryPay API Reference
 
-| Endpoint | Method | Auth | Purpose |
-|----------|--------|------|---------|
-| `/api/v4/sdk/payment_methods/{account}` | GET | Query params | Get Apple Pay merchant ID |
-| `/api/v4/payments/oneoff` | POST | Basic Auth | Create payment reference |
-| `/api/v4/apple_pay/payment_data` | POST | Bearer Token | Process Apple Pay token |
+| Endpoint                                | Method | Auth         | Purpose                   |
+| --------------------------------------- | ------ | ------------ | ------------------------- |
+| `/api/v4/sdk/payment_methods/{account}` | GET    | Query params | Get Apple Pay merchant ID |
+| `/api/v4/payments/oneoff`               | POST   | Basic Auth   | Create payment reference  |
+| `/api/v4/apple_pay/payment_data`        | POST   | Bearer Token | Process Apple Pay token   |
 
 ### API Details
 

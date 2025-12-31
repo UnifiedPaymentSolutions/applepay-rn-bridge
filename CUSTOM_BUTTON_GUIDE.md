@@ -13,6 +13,7 @@ The `@everypay/applepay-rn-bridge` library exposes methods that you can call fro
 ## Prerequisites
 
 Before following this guide, ensure you have:
+
 - Completed the [installation and Apple Pay setup](./README.md#installation)
 - Configured your Merchant ID in Xcode
 - Set up certificates with EveryPay
@@ -98,7 +99,7 @@ export default ApplePayButton;
 - **Minimum height**: 44pt (Apple HIG requirement for touch targets)
 - **Background**: Black (#000000) for standard appearance
 - **Text color**: White (#FFFFFF)
-- **Apple logo**: Use the Unicode character `` (Apple logo) with `-apple-system` font
+- **Apple logo**: Use the Unicode character ``(Apple logo) with`-apple-system` font
 - **Disabled state**: Reduce opacity to indicate unavailability
 
 ## SDK Mode Implementation
@@ -345,7 +346,10 @@ try {
         // User dismissed the Apple Pay sheet - typically don't show an error
         break;
       case 'invalid_config':
-        Alert.alert('Configuration Error', 'Please check your payment settings');
+        Alert.alert(
+          'Configuration Error',
+          'Please check your payment settings'
+        );
         break;
       case 'payment_error':
         Alert.alert('Payment Failed', error.message);

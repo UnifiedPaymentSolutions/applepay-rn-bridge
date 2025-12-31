@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",         // Output directory for compiled files
-    "rootDir": "./src",         // Directory for your source files
+    "outDir": "./dist", // Output directory for compiled files
+    "rootDir": "./src", // Directory for your source files
     "skipLibCheck": true,
     "jsx": "react-native",
     "moduleResolution": "node",

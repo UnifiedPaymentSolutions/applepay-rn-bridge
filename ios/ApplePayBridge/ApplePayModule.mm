@@ -1,5 +1,5 @@
 //
-//  ApplePayModule.m
+//  ApplePayModule.mm
 //  ApplePayBridge
 //
 //  Thin wrapper around EPApplePayManager SDK for React Native.
@@ -11,6 +11,10 @@
 #import <React/RCTUtils.h>
 #import <EverypayApplePay/EPApplePayManager.h>
 
+#ifdef RCT_NEW_ARCH_ENABLED
+#import <RNApplePayBridgeSpec/RNApplePayBridgeSpec.h>
+#endif
+
 // Error domain for this module
 static NSString * const ApplePayModuleErrorDomain = @"com.everypay.ApplePayModule";
 
@@ -21,6 +25,11 @@ typedef NS_ENUM(NSInteger, ApplePayModuleErrorCode) {
     ApplePayModuleErrorPaymentInProgress = 1003,
     ApplePayModuleErrorInvalidConfig = 1004,
 };
+
+#ifdef RCT_NEW_ARCH_ENABLED
+@interface ApplePayModule () <NativeApplePayModuleSpec>
+@end
+#endif
 
 @implementation ApplePayModule
 
@@ -275,5 +284,17 @@ RCT_EXPORT_METHOD(setMockPaymentsEnabled:(BOOL)enabled
     self.currentResolve = nil;
     self.currentReject = nil;
 }
+
+//-------------------------------------------------------------------------------------------
+#pragma mark - New Architecture Support (TurboModule)
+//-------------------------------------------------------------------------------------------
+
+#ifdef RCT_NEW_ARCH_ENABLED
+- (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
+    (const facebook::react::ObjCTurboModule::InitParams &)params
+{
+    return std::make_shared<facebook::react::NativeApplePayModuleSpecJSI>(params);
+}
+#endif
 
 @end

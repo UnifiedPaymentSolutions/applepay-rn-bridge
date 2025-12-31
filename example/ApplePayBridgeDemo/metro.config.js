@@ -7,7 +7,7 @@ const config = {
   },
   // Ensure Metro watches for changes in the parent project folder
   watchFolders: [
-    path.resolve(__dirname, '../../'),  // Adjust based on your project structure
+    path.resolve(__dirname, '../../'), // Adjust based on your project structure
   ],
 };
 
