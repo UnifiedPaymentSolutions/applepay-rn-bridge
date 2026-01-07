@@ -41,9 +41,9 @@ using namespace facebook::react;
         _buttonView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
         // Wire up onPress event to emit via Fabric
-        __weak typeof(self) weakSelf = self;
+        __weak __typeof__(self) weakSelf = self;
         _buttonView.onPress = ^(NSDictionary *event) {
-            __strong typeof(weakSelf) strongSelf = weakSelf;
+            __strong __typeof__(weakSelf) strongSelf = weakSelf;
             if (strongSelf) {
                 [strongSelf handlePress];
             }

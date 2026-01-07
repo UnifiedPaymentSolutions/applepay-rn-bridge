@@ -47,7 +47,7 @@ RCT_EXPORT_MODULE(ApplePayModule);
  * Check if Apple Pay is available on this device
  */
 RCT_EXPORT_METHOD(canMakePayments:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     BOOL canPay = [[EPApplePayManager sharedManager] canMakePayments];
     RCTLogInfo(@"[ApplePayModule] canMakePayments: %@", canPay ? @"YES" : @"NO");
     resolve(@(canPay));
@@ -57,7 +57,7 @@ RCT_EXPORT_METHOD(canMakePayments:(RCTPromiseResolveBlock)resolve
  * Check if device supports recurring payment tokens (iOS 16+)
  */
 RCT_EXPORT_METHOD(canRequestRecurringToken:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     BOOL canRequest = [[EPApplePayManager sharedManager] canRequestRecurringToken];
     RCTLogInfo(@"[ApplePayModule] canRequestRecurringToken: %@", canRequest ? @"YES" : @"NO");
     resolve(@(canRequest));
@@ -132,7 +132,7 @@ RCT_EXPORT_METHOD(configure:(NSDictionary *)config
  * Present Apple Pay sheet and return serialized token
  */
 RCT_EXPORT_METHOD(presentPayment:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     RCTLogInfo(@"[ApplePayModule] presentPayment called");
 
     // Check if payment is already in progress

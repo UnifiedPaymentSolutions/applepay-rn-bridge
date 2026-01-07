@@ -39,15 +39,7 @@ export interface NativeProps extends ViewProps {
   onPress?: BubblingEventHandler<OnPressEvent> | null;
 }
 
-let ApplePayButtonNativeComponent: HostComponent<NativeProps> | null = null;
-
-try {
-  ApplePayButtonNativeComponent = codegenNativeComponent<NativeProps>(
-    'ApplePayButton'
-  ) as HostComponent<NativeProps>;
-} catch (e) {
-  // Codegen component not available (Old Architecture)
-  // ApplePayButton.tsx will fall back to requireNativeComponent
-}
-
-export default ApplePayButtonNativeComponent;
+// Direct export required for React Native codegen to parse the component
+export default codegenNativeComponent<NativeProps>(
+  'ApplePayButton'
+) as HostComponent<NativeProps>;
