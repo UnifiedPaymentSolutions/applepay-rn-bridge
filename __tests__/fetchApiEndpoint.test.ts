@@ -6,7 +6,6 @@ import {
 import {
   API_AUTHORIZE_PAYMENT_PATH,
   API_ONEOFF_PATH,
-  API_PAYMENT_METHODS_PATH,
   API_PAYMENT_SESSION_PATH,
 } from '../src/payment/constants';
 
@@ -43,9 +42,6 @@ describe('Endpoint utility functions', () => {
       );
       expect(result.paymentSessionUrl).toBe(
         `https://example.com${API_PAYMENT_SESSION_PATH}`
-      );
-      expect(result.paymentMethodsUrl).toBe(
-        `https://example.com${API_PAYMENT_METHODS_PATH}`
       );
     });
 

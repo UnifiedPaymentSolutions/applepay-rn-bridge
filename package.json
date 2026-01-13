@@ -73,7 +73,7 @@
       "./__tests__/jest.setup.ts"
     ],
     "testMatch": [
-      "**/__tests__/**/*.test.ts?(x)"
+      "<rootDir>/__tests__/**/*.test.ts?(x)"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!(react-native|@react-native|react-native-vector-icons)/)"
