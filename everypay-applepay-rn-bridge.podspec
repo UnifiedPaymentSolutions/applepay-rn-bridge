@@ -25,11 +25,5 @@ Pod::Spec.new do |s|
   install_modules_dependencies(s)
 
   # EverypayApplePay SDK dependency
-  # NOTE: Since the SDK is not yet published to CocoaPods, consumers must add
-  # a local path reference in their app's Podfile:
-  #
-  #   pod 'EverypayApplePay', :path => '../path/to/everypay-applepay-sdk-client/EverypayApplePay'
-  #
-  # Once the SDK is published, uncomment the line below:
-  # s.dependency "EverypayApplePay", "~> 0.1.0"
+  s.dependency "EverypayApplePay", "~> 0.1.0"
 end
