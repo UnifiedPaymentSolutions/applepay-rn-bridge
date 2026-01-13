@@ -10,19 +10,16 @@ A React Native project integrating Apple Pay using the native bridge, bootstrapp
 ## Installation
 
 ### Install dependencies
-
 ```sh
 npm install
 ```
 
 ### For iOS, install CocoaPods (first time only)
-
 ```sh
 bundle install
 ```
 
 ### Install iOS native dependencies
-
 ```sh
 bundle exec pod install --project-directory=ios
 ```
@@ -30,13 +27,11 @@ bundle exec pod install --project-directory=ios
 ## Running the App
 
 ### Start Metro server
-
 ```sh
 npm start
 ```
 
 ### Launch on iOS
-
 ```sh
 npm run ios
 ```
@@ -45,22 +40,22 @@ npm run ios
 
 ### Setup Requirements
 
-1. **Apple Developer Account**: Register at [developer.apple.com](https://developer.apple.com)
-2. **Merchant ID**: Create a Merchant ID in the Apple Developer Portal
-3. **Entitlements File**: Update `ios/ApplePayBridgeDemo/ApplePayBridgeDemo.entitlements` with your Merchant ID
-4. **Xcode Configuration**: Enable the Apple Pay capability in your app target's Signing & Capabilities tab
-5. **Bundle Identifier**:
-   - In Xcode, update the app's Bundle Identifier to match one registered in your Apple Developer account
-   - Go to [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list)
-   - Create a new App ID (Identifier) if needed, and ensure that Apple Pay is enabled for it
+1. **Apple Developer Account**: Register at [developer.apple.com](https://developer.apple.com)  
+2. **Merchant ID**: Create a Merchant ID in the Apple Developer Portal  
+3. **Entitlements File**: Update `ios/ApplePayBridgeDemo/ApplePayBridgeDemo.entitlements` with your Merchant ID  
+4. **Xcode Configuration**: Enable the Apple Pay capability in your app target's Signing & Capabilities tab  
+5. **Bundle Identifier**:  
+   - In Xcode, update the app's Bundle Identifier to match one registered in your Apple Developer account  
+   - Go to [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list)  
+   - Create a new App ID (Identifier) if needed, and ensure that Apple Pay is enabled for it  
    - Use this registered Bundle Identifier in your project target
 
-6. **Merchant Identity Certificate**:
-   - Required for Apple Pay backend validation
-   - **You must use the Certificate Signing Request (CSR) provided by Everypay**
-   - In the Apple Developer Portal, navigate to **Certificates** → **Apple Pay Merchant Identity Certificate**
-   - Upload the CSR from Everypay to generate the certificate
-   - Download and install the resulting certificate in your macOS Keychain
+6. **Merchant Identity Certificate**:  
+   - Required for Apple Pay backend validation  
+   - **You must use the Certificate Signing Request (CSR) provided by Everypay**  
+   - In the Apple Developer Portal, navigate to **Certificates** → **Apple Pay Merchant Identity Certificate**  
+   - Upload the CSR from Everypay to generate the certificate  
+   - Download and install the resulting certificate in your macOS Keychain  
    - This certificate is used by your backend to generate valid Apple Pay payment sessions
 
 ---

@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  View,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet, Platform } from 'react-native';
 
 // Define prop types with TypeScript interface
 interface ApplePayButtonProps {
@@ -14,10 +8,10 @@ interface ApplePayButtonProps {
   loading?: boolean;
 }
 
-const ApplePayButton: React.FC<ApplePayButtonProps> = ({
-  onPress,
-  disabled = false,
-  loading = false,
+const ApplePayButton: React.FC<ApplePayButtonProps> = ({ 
+  onPress, 
+  disabled = false, 
+  loading = false 
 }) => (
   <TouchableOpacity
     style={[styles.button, disabled && styles.disabled]}
@@ -26,9 +20,15 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
     activeOpacity={0.8}
   >
     <View style={styles.content}>
-      <Text style={styles.text}>{loading ? 'Processing...' : 'Buy with '}</Text>
-      <Text style={styles.appleLogoText}>{loading ? '' : ''}</Text>
-      <Text style={styles.text}>{loading ? '' : 'Pay'}</Text>
+      <Text style={styles.text}>
+        {loading ? 'Processing...' : 'Buy with '}
+      </Text>
+      <Text style={styles.appleLogoText}>
+        {loading ? '' : ''}
+      </Text>
+      <Text style={styles.text}>
+        {loading ? '' : 'Pay'}
+      </Text>
     </View>
   </TouchableOpacity>
 );
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? '-apple-system' : 'System',
     paddingBottom: 3,
-    paddingRight: 1,
+    paddingRight: 1
   },
   disabled: {
     opacity: 0.6,
