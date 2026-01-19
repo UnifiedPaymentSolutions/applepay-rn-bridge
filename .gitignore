@@ -4,6 +4,9 @@ node_modules/
 # TSC dist
 dist/
 
+# Build output (react-native-builder-bob)
+lib/
+
 # Mac system files
 .DS_Store
 

@@ -11,9 +11,9 @@ jest.mock('react-native', () => {
     NativeModules: {
       ApplePayModule: {
         // FIX THIS: Change method name to match what your code is using
-        startApplePay: jest.fn(),  // Changed from startPayment to startApplePay
+        startApplePay: jest.fn(), // Changed from startPayment to startApplePay
         canMakePayments: jest.fn().mockResolvedValue(true),
-      }
+      },
     },
     NativeEventEmitter: jest.fn(() => ({
       addListener: jest.fn(() => ({ remove: jest.fn() })),
@@ -27,6 +27,6 @@ jest.mock('react-native', () => {
     ActivityIndicator: 'ActivityIndicator',
     // Add other core components as needed
   };
-  
+
   return mockRN;
 });

@@ -1,3 +1,131 @@
+// =============================================================================
+// APPLE PAY BUTTON TYPES
+// =============================================================================
+
+/**
+ * Apple Pay button style (PKPaymentButtonStyle)
+ */
+export type ApplePayButtonStyle =
+  | 'black'
+  | 'white'
+  | 'whiteOutline'
+  | 'automatic';
+
+/**
+ * Apple Pay button type (PKPaymentButtonType)
+ * These map to the text shown on the button
+ */
+export type ApplePayButtonType =
+  | 'plain' // Apple Pay logo only
+  | 'buy' // "Buy with Apple Pay"
+  | 'setUp' // "Set Up Apple Pay"
+  | 'inStore' // "Pay with Apple Pay"
+  | 'donate' // "Donate with Apple Pay"
+  | 'checkout' // "Check out with Apple Pay"
+  | 'book' // "Book with Apple Pay"
+  | 'subscribe' // "Subscribe with Apple Pay"
+  | 'reload' // "Reload with Apple Pay"
+  | 'addMoney' // "Add Money with Apple Pay"
+  | 'topUp' // "Top Up with Apple Pay"
+  | 'order' // "Order with Apple Pay"
+  | 'rent' // "Rent with Apple Pay"
+  | 'support' // "Support with Apple Pay"
+  | 'contribute' // "Contribute with Apple Pay"
+  | 'tip' // "Tip with Apple Pay"
+  | 'continue'; // "Continue with Apple Pay"
+
+/**
+ * SDK Configuration for the button component
+ */
+export interface ApplePaySDKConfig {
+  /** Backend API username */
+  apiUsername: string;
+  /** Backend API secret */
+  apiSecret: string;
+  /** Backend API base URL */
+  baseUrl: string;
+  /** Account name (e.g., "EUR3D1") */
+  accountName: string;
+  /** ISO 3166-1 alpha-2 country code (e.g., "EE") */
+  countryCode?: string;
+}
+
+// =============================================================================
+// BACKEND MODE TYPES (Recommended)
+// =============================================================================
+
+/**
+ * Backend Mode data - user fetches this from their backend.
+ * Contains all data needed to present Apple Pay sheet.
+ */
+export interface ApplePayBackendData {
+  /** Apple Pay merchant identifier (e.g., "merchant.com.example") */
+  merchantIdentifier: string;
+  /** Merchant display name shown on payment sheet */
+  merchantName: string;
+  /** Payment amount */
+  amount: number;
+  /** ISO 4217 currency code (e.g., "EUR") */
+  currencyCode: string;
+  /** ISO 3166-1 alpha-2 country code (e.g., "EE") */
+  countryCode: string;
+  /** Payment reference from EveryPay init */
+  paymentReference: string;
+  /** Mobile access token from EveryPay init */
+  mobileAccessToken: string;
+  /** Optional: Enable recurring token request (iOS 16+) */
+  recurring?: RecurringConfig;
+}
+
+/**
+ * Recurring payment configuration (iOS 16+)
+ */
+export interface RecurringConfig {
+  /** Description shown in payment sheet (e.g., "Save card for future payments") */
+  description: string;
+  /** URL where users can manage their recurring payment */
+  managementURL: string;
+  /** Optional: Label for billing item */
+  billingLabel?: string;
+  /** Optional: Billing agreement text */
+  billingAgreement?: string;
+}
+
+/**
+ * Token result returned from Apple Pay (Backend Mode).
+ * User sends this to their backend for processing.
+ */
+export interface ApplePayTokenResult {
+  /** Whether Apple Pay authorization was successful */
+  success: boolean;
+  /** Base64 encoded Apple Pay token data */
+  paymentData: string;
+  /** Apple Pay transaction identifier */
+  transactionIdentifier: string;
+  /** Payment method information */
+  paymentMethod: PaymentMethodInfo;
+  /** Payment reference (from backend data) */
+  paymentReference: string;
+  /** Mobile access token (from backend data) */
+  mobileAccessToken: string;
+}
+
+/**
+ * Payment method information from Apple Pay
+ */
+export interface PaymentMethodInfo {
+  /** Display name (e.g., "Visa 1234") */
+  displayName: string;
+  /** Payment network (e.g., "Visa", "MasterCard") */
+  network: string;
+  /** Payment method type (PKPaymentMethodType enum value) */
+  type: number;
+}
+
+// =============================================================================
+// SDK MODE TYPES
+// =============================================================================
+
 /**
  * Authentication credentials for the backend API.
  */
@@ -12,9 +140,7 @@ export interface AuthCredentials {
  * Backend API endpoint URLs.
  */
 export interface InitEndpoints {
-
   mobileOneoffUrl: string;
-
 }
 
 /**
@@ -34,8 +160,6 @@ export interface StartEndpoints {
    * If you don't implement that delegate method, this is not needed.
    */
   paymentSessionUrl?: string; // Present in native code, but not actively used
-
-  paymentMethodsUrl: string;
 
   mobileOneoffUrl?: string;
 }
@@ -84,12 +208,11 @@ export interface InitRequestData {
  * and used to configure the Apple Pay sheet.
  */
 export interface PaymentRequestData {
-
   /** Backend account name (optional, defaults to "EUR3D1" in native code). */
   accountName: string;
 
   /** Payment amount as a number (e.g., 10.99). */
-  amount: string | number;
+  amount: string | number;
 
   /** Everypay payment reference */
   paymentReference?: string;
@@ -108,7 +231,6 @@ export interface PaymentRequestData {
 
   /** Payment description displayed on the Apple Pay sheet (e.g., "Payment for Order"). */
   label?: string;
-
 }
 
 export interface InitRequest {
@@ -220,4 +342,63 @@ export interface InitResult {
   currencyCode: string;
   paymentState: string;
   originalInitResponse?: Record<string, any>; // Optional original full response
+}
+
+// =============================================================================
+// NATIVE MODULE INTERFACE (SDK Wrapper)
+// =============================================================================
+
+/**
+ * Configuration for the native SDK wrapper.
+ * Used by both Backend Mode and SDK Mode to configure the Apple Pay sheet.
+ */
+export interface SDKConfigureRequest {
+  /** Payment amount */
+  amount: number;
+  /** Apple Pay merchant identifier */
+  merchantIdentifier: string;
+  /** Merchant display name shown on payment sheet */
+  merchantName: string;
+  /** ISO 4217 currency code (e.g., "EUR") */
+  currencyCode: string;
+  /** ISO 3166-1 alpha-2 country code (e.g., "EE") */
+  countryCode: string;
+  /** Optional recurring payment configuration */
+  recurring?: RecurringConfig;
+}
+
+/**
+ * Result from native presentPayment method.
+ * Contains serialized Apple Pay token.
+ */
+export interface NativeTokenResult {
+  /** Whether Apple Pay authorization was successful */
+  success: boolean;
+  /** Base64 encoded Apple Pay token data */
+  paymentData: string;
+  /** Apple Pay transaction identifier */
+  transactionIdentifier: string;
+  /** Payment method information */
+  paymentMethod: PaymentMethodInfo;
+}
+
+/**
+ * New native module interface (SDK wrapper).
+ * This is a thin wrapper around EPApplePayManager.
+ */
+export interface NativeApplePayModuleV2 {
+  /** Check if Apple Pay is available on this device */
+  canMakePayments(): Promise<boolean>;
+
+  /** Check if device supports recurring payment tokens (iOS 16+) */
+  canRequestRecurringToken(): Promise<boolean>;
+
+  /** Configure the SDK before presenting payment sheet */
+  configure(config: SDKConfigureRequest): Promise<{ success: boolean }>;
+
+  /** Present Apple Pay sheet and return serialized token */
+  presentPayment(): Promise<NativeTokenResult>;
+
+  /** Enable/disable mock payments (debug builds only) */
+  setMockPaymentsEnabled(enabled: boolean): Promise<MockPaymentResult>;
 }

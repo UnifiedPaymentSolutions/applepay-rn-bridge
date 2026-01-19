@@ -1,30 +1,45 @@
 import {
   canMakePayments,
-  initEverypayPayment,
   setMockPaymentsEnabled,
-  startApplePayPayment,
-  startApplePayWithLateEverypayInit,
+  ApplePayButton,
+} from "@everypay/applepay-rn-bridge";
+import type {
+  ApplePayBackendData,
+  ApplePayTokenResult,
+  PaymentResult,
 } from "@everypay/applepay-rn-bridge";
 import React, {useEffect, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
-import ApplePayButton from "./ApplePayButton";
+
+const BACKEND_URL = "http://localhost:3000";
 
 const App = () => {
-  const [earlyInitLoading, setEarlyInitLoading] = useState(false);
-  const [lateInitLoading, setLateInitLoading] = useState(false);
   const [canPay, setCanPay] = useState<boolean | null>(null);
+
+  // Mode selection state
+  const [selectedMode, setSelectedMode] = useState<"backend" | "sdk" | null>(
+    null
+  );
+
+  // Backend mode state
+  const [backendData, setBackendData] = useState<ApplePayBackendData | null>(
+    null
+  );
+  const [backendLoading, setBackendLoading] = useState(false);
 
   // Editable config states
   const [apiUsername, setApiUsername] = useState("");
-  const [apiSecret, setApiSecret] = useState("");
+const [apiSecret, setApiSecret] = useState("");
   const [baseUrl, setBaseUrl] = useState("https://payment.sandbox.lhv.ee");
   const [accountName, setAccountName] = useState("EUR3D1");
   const [amount, setAmount] = useState("1.99");
@@ -45,140 +60,204 @@ const App = () => {
     }
   };
 
-  const handlePay = async () => {
-    if (!canPay) {
-      Alert.alert(
-        "Not Available",
-        "Apple Pay is not available on this device."
-      );
-      return;
-    }
-
-    setEarlyInitLoading(true);
-
+  // Backend Mode: Fetch payment data from backend
+  const fetchBackendData = async () => {
+    setBackendLoading(true);
+    setBackendData(null);
     try {
-      const initResult = await initEverypayPayment({
-        auth: {
-          apiUsername,
-          apiSecret,
-        },
-        baseUrl,
-        data: {
-          accountName,
-          currencyCode: "EUR",
-          countryCode: "EE",
+      const response = await fetch(`${BACKEND_URL}/api/applepay/create-payment`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
           amount: parseFloat(amount),
-          label,
-          customerUrl: "https://customerprofile.example.com/john-doe",
-          locale: "en",
-          customerIp: "192.168.1.1",
-        },
+          label: label,
+          orderReference: `ORDER-${Date.now()}`,
+          customerEmail: "test@example.com",
+        }),
       });
-      console.log(
-        "[ApplePay RN] initPayment result:" + JSON.stringify(initResult)
-      );
-
-      console.log("[ApplePay RN] Going to invoke startPayment");
-      const resp = await startApplePayPayment({
-        auth: {
-          apiUsername,
-          apiSecret,
-        },
-        baseUrl,
-        data: {
-          accountName: initResult.accountName,
-          paymentReference: initResult.paymentReference,
-          amount: initResult.amount,
-          label,
-          currencyCode: initResult.currencyCode,
-          countryCode: "EE",
-          mobileAccessToken: initResult.mobileAccessToken,
-        },
-      });
-      console.log("Apple Pay response:", resp);
-      Alert.alert("Success", "Payment completed successfully!");
-    } catch (error: any) {
-      if ("code" in error && error.code && error.code === "cancelled") {
-      } else {
-        console.error("Error starting Apple Pay:", JSON.stringify(error));
-        Alert.alert("Error", "Failed to start Apple Pay");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
+      const data = await response.json();
+      setBackendData(data);
+    } catch (error) {
+      console.error("Error fetching backend data:", error);
+      Alert.alert("Error", "Failed to initialize payment from backend. Make sure the server is running.");
     } finally {
-      setEarlyInitLoading(false);
+      setBackendLoading(false);
     }
   };
 
-  // Add this new handler function
-  const handleLateInitPay = async () => {
-    setLateInitLoading(true);
-    try {
-      // Create config without payment reference/token
-      const config = {
-        auth: {
-          apiUsername,
-          apiSecret,
-        },
-        baseUrl,
-        data: {
-          accountName,
-          amount: parseFloat(amount),
-          label,
-          currencyCode: "EUR", // You might want to make this configurable
-          countryCode: "EE", // You might want to make this configurable
-        },
-      };
-      const result = await startApplePayWithLateEverypayInit(config);
-      console.log("Late init payment successful:", result);
-      Alert.alert("Success", "Payment completed successfully!");
-    } catch (error: any) {
-      if ("code" in error && error.code && error.code === "cancelled") {
-      } else {
-        console.error("Error starting Apple Pay:", JSON.stringify(error));
-        Alert.alert("Error", "Failed to start Apple Pay");
-      }
-    } finally {
-      setLateInitLoading(false);
+  // Backend Mode: Process the Apple Pay token
+  const handleBackendPaymentToken = async (
+    tokenData: ApplePayTokenResult
+  ): Promise<unknown> => {
+    const response = await fetch(`${BACKEND_URL}/api/applepay/process-token`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(tokenData),
+    });
+    const result = await response.json();
+    if (!response.ok || result.success === false) {
+      throw new Error(result.error || "Payment processing failed");
     }
+    return result;
   };
 
-  // Add this function to validate fields before payment
-  const validateAndPay = (paymentFunction: () => void): void => {
-    if (
-      !baseUrl ||
-      !apiUsername ||
-      !apiSecret ||
-      !accountName ||
-      !amount ||
-      !label
-    ) {
-      Alert.alert(
-        "Required Fields",
-        "Please fill in all required fields marked with *",
-        [{text: "OK"}]
-      );
-      return;
-    }
-
-    paymentFunction();
+  // SDK Mode: Handle payment result
+  const handleSDKPaymentResult = async (result: PaymentResult): Promise<unknown> => {
+    console.log("SDK Payment result:", result);
+    return result;
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>LHV Everypay Apple Pay Demo</Text>
+  // Reset to mode selection
+  const handleBack = () => {
+    setSelectedMode(null);
+    setBackendData(null);
+  };
 
-      {canPay === null ? (
-        <ActivityIndicator size="small" />
-      ) : canPay ? (
-        <Text style={styles.subtitle}>
-          Apple Pay is available on the device ✅
+  // Check if SDK mode fields are valid (no alert, just returns boolean)
+  const areSDKFieldsValid = (): boolean => {
+    return !!(baseUrl && apiUsername && apiSecret && accountName && amount && label);
+  };
+
+  // Check if New Architecture is enabled
+  const isNewArchitecture = (global as any).__turboModuleProxy != null;
+
+  // Render mode selection buttons
+  const renderModeSelection = () => (
+    <View style={styles.modeSelectionContainer}>
+      <Text style={styles.modeTitle}>Select Payment Mode</Text>
+
+      <TouchableOpacity
+        style={styles.modeButton}
+        onPress={() => setSelectedMode("backend")}
+      >
+        <Text style={styles.modeButtonTitle}>Backend Mode</Text>
+        <Text style={styles.modeButtonSubtitle}>
+          Recommended - API credentials stay secure on your server
         </Text>
-      ) : (
-        <Text style={styles.warning}>
-          Apple Pay not available on the device ⚠️
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.modeButton, styles.modeButtonSecondary]}
+        onPress={() => setSelectedMode("sdk")}
+      >
+        <Text style={styles.modeButtonTitle}>SDK Mode</Text>
+        <Text style={styles.modeButtonSubtitle}>
+          API credentials stored in app - simpler setup
         </Text>
+      </TouchableOpacity>
+
+      <Text style={styles.archIndicator}>
+        New Architecture: {isNewArchitecture ? "Enabled" : "Disabled"}
+      </Text>
+    </View>
+  );
+
+  // Render Backend Mode UI
+  const renderBackendMode = () => (
+    <View>
+      <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <Text style={styles.backButtonText}>← Back</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.modeHeader}>Backend Mode</Text>
+      <Text style={styles.modeDescription}>
+        Server: {BACKEND_URL}
+      </Text>
+
+      {/* Amount and Label inputs */}
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>
+          Payable Amount <Text style={styles.required}>*</Text>
+        </Text>
+        <TextInput
+          style={[styles.input, !amount && styles.inputError]}
+          value={amount}
+          onChangeText={setAmount}
+          placeholder="Amount"
+          keyboardType="numeric"
+        />
+      </View>
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>
+          Product Label <Text style={styles.required}>*</Text>
+        </Text>
+        <TextInput
+          style={[styles.input, !label && styles.inputError]}
+          value={label}
+          onChangeText={setLabel}
+          placeholder="Label"
+        />
+      </View>
+
+      {/* Mock payments toggle */}
+      <View style={styles.switchRow}>
+        <Text style={styles.inputLabel}>
+          Enable mock payment (iOS Simulator)
+        </Text>
+        <Switch
+          value={mockEnabled}
+          onValueChange={(value) => {
+            setMockPaymentsEnabled(value);
+            setMockEnabled(value);
+          }}
+        />
+      </View>
+
+      {/* Prepare Payment button */}
+      {!backendData && (
+        <TouchableOpacity
+          style={[styles.prepareButton, backendLoading && styles.buttonDisabled]}
+          onPress={fetchBackendData}
+          disabled={backendLoading || !amount || !label}
+        >
+          {backendLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.prepareButtonText}>Prepare Payment</Text>
+          )}
+        </TouchableOpacity>
       )}
 
-      {/* Editable fields */}
+      {/* Apple Pay Button - shown when backend data is ready */}
+      {backendData && (
+        <View style={styles.paymentButtonContainer}>
+          <Text style={styles.readyText}>Payment ready!</Text>
+          <ApplePayButton
+            backendData={backendData}
+            onPressCallback={handleBackendPaymentToken}
+            onPaymentSuccess={(result) => {
+              console.log("Backend payment success:", result);
+              Alert.alert("Success", "Payment completed successfully!");
+              setBackendData(null);
+            }}
+            onPaymentError={(error) => {
+              console.error("Backend payment error:", error);
+              Alert.alert("Error", error.message || "Payment failed");
+            }}
+            onPaymentCanceled={() => {
+              console.log("Payment canceled");
+            }}
+            buttonStyle="black"
+            buttonType="buy"
+          />
+        </View>
+      )}
+    </View>
+  );
+
+  // Render SDK Mode UI
+  const renderSDKMode = () => (
+    <View>
+      <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <Text style={styles.backButtonText}>← Back</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.modeHeader}>SDK Mode</Text>
+
+      {/* All configuration fields */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>
           Everypay API Base URL <Text style={styles.required}>*</Text>
@@ -248,9 +327,10 @@ const App = () => {
         />
       </View>
 
-      <View>
+      {/* Mock payments toggle */}
+      <View style={styles.switchRow}>
         <Text style={styles.inputLabel}>
-          Enable mock payment (for iOS Simulator)
+          Enable mock payment (iOS Simulator)
         </Text>
         <Switch
           value={mockEnabled}
@@ -261,48 +341,71 @@ const App = () => {
         />
       </View>
 
-      {/* Two payment buttons with clear labels */}
-      <View style={styles.paymentOptionsContainer}>
-        <Text style={styles.sectionTitle}>Choose Payment Flow:</Text>
-
-        <View style={styles.paymentButtonsRow}>
-          <View style={styles.paymentButtonColumn}>
-            <Text style={styles.buttonLabel}>Pre-Init</Text>
-            <Text style={styles.buttonDescription}>
-              Init EP first & open pay sheet
-            </Text>
-            <ApplePayButton
-              onPress={() => validateAndPay(handlePay)}
-              disabled={!canPay || earlyInitLoading}
-              loading={earlyInitLoading}
-            />
-          </View>
-
-          <View style={styles.buttonSeparator} />
-
-          <View style={styles.paymentButtonColumn}>
-            <Text style={styles.buttonLabel}>Late Init</Text>
-            <Text style={styles.buttonDescription}>
-              Open pay sheet & init EP during authorization
-            </Text>
-            <ApplePayButton
-              onPress={() => validateAndPay(handleLateInitPay)}
-              disabled={!canPay || lateInitLoading}
-              loading={lateInitLoading}
-            />
-          </View>
-        </View>
+      {/* Apple Pay Button */}
+      <View style={styles.paymentButtonContainer}>
+        {areSDKFieldsValid() ? (
+          <ApplePayButton
+            config={{
+              apiUsername,
+              apiSecret,
+              baseUrl,
+              accountName,
+              countryCode: "EE",
+            }}
+            amount={parseFloat(amount)}
+            label={label}
+            onPressCallback={handleSDKPaymentResult}
+            onPaymentSuccess={(result) => {
+              console.log("SDK payment success:", result);
+              Alert.alert("Success", "Payment completed successfully!");
+            }}
+            onPaymentError={(error) => {
+              console.error("SDK payment error:", error);
+              Alert.alert("Error", error.message || "Payment failed");
+            }}
+            onPaymentCanceled={() => {
+              console.log("Payment canceled");
+            }}
+            buttonStyle="black"
+            buttonType="buy"
+          />
+        ) : (
+          <Text style={styles.fillFieldsText}>
+            Fill in all required fields to enable Apple Pay
+          </Text>
+        )}
       </View>
     </View>
+  );
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <Text style={styles.title}>LHV Everypay Apple Pay Demo</Text>
+
+      {canPay === null ? (
+        <ActivityIndicator size="small" />
+      ) : canPay ? (
+        <Text style={styles.subtitle}>Apple Pay available</Text>
+      ) : (
+        <Text style={styles.warning}>Apple Pay not available</Text>
+      )}
+
+      {selectedMode === null && renderModeSelection()}
+      {selectedMode === "backend" && renderBackendMode()}
+      {selectedMode === "sdk" && renderSDKMode()}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f5f5f7",
+  },
+  contentContainer: {
     paddingTop: 60,
     paddingHorizontal: 20,
-    backgroundColor: "#f5f5f7",
+    paddingBottom: 40,
   },
   title: {
     fontSize: 22,
@@ -320,29 +423,68 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "orange",
   },
-  applePayButtonContainer: {
-    marginTop: 16,
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-  info: {
+  // Mode selection styles
+  modeSelectionContainer: {
     marginTop: 20,
-    fontSize: 12,
-    textAlign: "center",
-    color: "#666",
   },
+  modeTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#333",
+  },
+  modeButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+  },
+  modeButtonSecondary: {
+    backgroundColor: "#5856D6",
+  },
+  modeButtonTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  modeButtonSubtitle: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.8)",
+  },
+  // Mode header styles
+  modeHeader: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 4,
+    color: "#333",
+  },
+  modeDescription: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 16,
+  },
+  // Back button
+  backButton: {
+    marginBottom: 12,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: "#007AFF",
+  },
+  // Input styles
   inputGroup: {
-    marginBottom: 8, // less vertical spacing between inputs
+    marginBottom: 8,
   },
   inputLabel: {
-    fontSize: 11, // smaller label text
-    color: "#666", // subtle grey
-    marginBottom: 2, // tight spacing between label and input
+    fontSize: 11,
+    color: "#666",
+    marginBottom: 2,
     fontWeight: "500",
   },
   input: {
-    height: 36, // a bit shorter than default
+    height: 36,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 6,
@@ -350,46 +492,55 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontSize: 13,
   },
-  paymentOptionsContainer: {
-    marginTop: 20,
-    width: "100%",
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  paymentButtonsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    width: "100%",
-  },
-  paymentButtonColumn: {
-    flex: 1,
-    alignItems: "center",
-    maxWidth: 160,
-  },
-  buttonSeparator: {
-    width: 20, // Space between buttons
-  },
-  buttonLabel: {
-    fontSize: 14,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  buttonDescription: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 8,
-    height: 32, // Fixed height to align buttons even with different text lengths
-  },
   required: {
     color: "red",
   },
   inputError: {
     borderColor: "red",
+  },
+  // Switch row
+  switchRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 12,
+  },
+  // Prepare button
+  prepareButton: {
+    backgroundColor: "#34C759",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  prepareButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  // Payment button container
+  paymentButtonContainer: {
+    marginTop: 20,
+  },
+  readyText: {
+    textAlign: "center",
+    color: "#34C759",
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  fillFieldsText: {
+    textAlign: "center",
+    color: "#999",
+    fontStyle: "italic",
+  },
+  archIndicator: {
+    textAlign: "center",
+    color: "#888",
+    fontSize: 12,
+    marginTop: 30,
   },
 });
 
